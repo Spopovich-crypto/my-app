@@ -10,7 +10,7 @@ export default function Home() {
     const run = async () => {
       try {
         const res = await invoke("run_embedded_python", {
-          param: JSON.stringify({ name: "chinami", message: "Hello!" })
+          param: JSON.stringify({ name: "Chinami", message: "Hello!" })
         });
         setResult(String(res));
       } catch (error) {
