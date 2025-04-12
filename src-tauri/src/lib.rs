@@ -16,14 +16,18 @@ fn run_python_script(script: String, param: String) -> Result<String, String> {
     use std::io::Write;
     use std::process::{Command, Stdio};
     use std::os::windows::process::CommandExt;
+    use encoding_rs::UTF_8;
 
     const CREATE_NO_WINDOW: u32 = 0x08000000; // コンソールウィンドウを表示しないフラグ
 
     let current_dir = env::current_dir().map_err(|e| e.to_string())?;
-    println!("Current working directory: {:?}", current_dir);
-    write_log(&format!("Current working directory: {:?}", current_dir));
+    // write_log(&format!("Current working directory: {:?}", current_dir));
 
-    let script_path = format!("src-python/{}", script); // ここで任意の.pyを指定
+    write_log(&format!("PARAM: {}", param));
+    // write_log(&format!("PARAM BYTES: {:?}", param.as_bytes()));
+
+    let script_path = format!("src-python/{}", script);
+
     let mut child = Command::new("python-embed/python.exe")
         .arg(&script_path)
         .stdin(Stdio::piped())
@@ -34,17 +38,33 @@ fn run_python_script(script: String, param: String) -> Result<String, String> {
         .map_err(|e| e.to_string())?;
 
     if let Some(stdin) = &mut child.stdin {
+        let (encoded_param, _, _) = UTF_8.encode(&param); // ← ちゃんとUTF-8で強制エンコード
         stdin
-            .write_all(param.as_bytes())
+            .write_all(&encoded_param)
             .map_err(|e| e.to_string())?;
     }
 
     let output = child.wait_with_output().map_err(|e| e.to_string())?;
 
+    // write_log(&format!("STDOUT RAW: {:?}", output.stdout));
+    // write_log(&format!("STDERR RAW: {:?}", output.stderr));
+
+    let stdout_str = String::from_utf8(output.stdout)
+        .map_err(|e| {
+            write_log(&format!("STDOUT decode error: {:?}", e));
+            format!("出力のデコードに失敗しました（UTF-8じゃない可能性）")
+        })?;
+
+    let stderr_str = String::from_utf8(output.stderr)
+        .unwrap_or_else(|e| format!("Could not decode stderr: {:?}", e));
+
+    // write_log(&format!("STDOUT TEXT: {}", stdout_str));
+    // write_log(&format!("STDERR TEXT: {}", stderr_str));
+
     if output.status.success() {
-        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+        Ok(stdout_str)
     } else {
-        Err(String::from_utf8_lossy(&output.stderr).to_string())
+        Err(stderr_str)
     }
 }
 

@@ -16,7 +16,19 @@ def parse_args_from_cli():
     return vars(parser.parse_args())
 
 def parse_args_from_stdin():
-    return json.load(sys.stdin)
+    import sys
+    raw = sys.stdin.buffer.read()
+    print("🧪 RAW BYTES:", list(raw), file=sys.stderr)  # stderrにバイナリ吐く（壊れてるかチェック）
+
+    try:
+        decoded = raw.decode("utf-8")
+        print("🧪 DECODED:", decoded, file=sys.stderr)
+    except UnicodeDecodeError as e:
+        print("🧪 DECODE ERROR:", e, file=sys.stderr)
+        raise
+
+    import json
+    return json.loads(decoded)
 
 
 def main(args_dict):
@@ -30,6 +42,9 @@ def main(args_dict):
 
 if __name__ == "__main__":
     args = parse_args_from_stdin() if not sys.stdin.isatty() else parse_args_from_cli()
-    print(f"args_dict: {args}")
+
+    sys.stdout.buffer.write(json.dumps(args, ensure_ascii=False).encode("utf-8"))
+    sys.stdout.buffer.write(b"\n")
+
     result = main(args)
 

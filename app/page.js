@@ -17,6 +17,10 @@ export default function Page() {
         folder: "./data",
         plant_name: "工場B",
       };
+      console.log("params before invoke:", params);
+      const encoded = new TextEncoder().encode(JSON.stringify(params));
+      console.log("Encoded bytes:", encoded);
+
       const output = await runPythonScript(script, params);
       setResult(output);
     })();
