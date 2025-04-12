@@ -1,4 +1,5 @@
 use chrono::Local;
+use tauri::Emitter;
 
 // 🔽 ログをファイルに書き出す関数
 fn write_log(level: &str, message: &str) {
@@ -81,6 +82,50 @@ fn run_python_script(script: String, param: String) -> Result<String, String> {
     }
 }
 
+#[tauri::command]
+fn run_python_script_streaming(window: tauri::Window, script: String, param: String) -> Result<(), String> {
+    use std::io::{BufRead, BufReader, Write};
+    use std::process::{Command, Stdio};
+    use std::os::windows::process::CommandExt;
+    use encoding_rs::UTF_8;
+
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+    let mut child = Command::new("python-embed/python.exe")
+        .arg(format!("src-python/{}", script))
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::inherit())
+        .creation_flags(CREATE_NO_WINDOW)
+        .spawn()
+        .map_err(|e| format!("起動失敗: {}", e))?;
+
+    if let Some(stdin) = &mut child.stdin {
+        let (encoded_param, _, _) = UTF_8.encode(&param);
+        stdin
+            .write_all(&encoded_param)
+            .map_err(|e| format!("stdin書き込み失敗: {}", e))?;
+    }
+
+    let stdout = child.stdout.take().ok_or("stdout取得失敗")?;
+    let reader = BufReader::new(stdout);
+
+    for line in reader.lines() {
+        match line {
+            Ok(l) => {
+                window.emit("python-log", l).unwrap_or_else(|err| {
+                    println!("emit失敗: {:?}", err);
+                });
+            }
+            Err(e) => {
+                return Err(format!("出力読み込み失敗: {}", e));
+            }
+        }
+    }
+
+    Ok(())
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -95,7 +140,9 @@ pub fn run() {
             }
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![run_python_script])
+        .invoke_handler(tauri::generate_handler![
+            run_python_script, 
+            run_python_script_streaming])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

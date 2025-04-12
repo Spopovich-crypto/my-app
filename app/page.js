@@ -1,27 +1,49 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { runPythonScript } from "./utils/invokePython";
-import { checkForUpdate } from "./utils/checkForUpdate"; // ← これも使う
+import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
+import { checkForUpdate } from "./utils/checkForUpdate";
 
 export default function Page() {
-  const [result, setResult] = useState("");
+  const [logLines, setLogLines] = useState([]);
   const [updateMessage, setUpdateMessage] = useState("");
   const [loading, setLoading] = useState(false);
+  const [completed, setCompleted] = useState(false);
 
   useEffect(() => {
-    (async () => {
+    const startPython = async () => {
       const script = "main.py";
       const params = {
         mode: "csv",
         folder: "./data",
         plant_name: "工場B",
       };
-      const output = await runPythonScript(script, params);
-      console.log(output);
-      
-      setResult(output);
-    })();
+
+      // リスナーを登録（ログ受信）
+      const unlisten = await listen("python-log", (event) => {
+        const line = event.payload;
+
+        setLogLines((prev) => [...prev, line]);
+
+        // 任意：終了っぽいワードが来たらcompletedにする
+        if (line.includes("CSV処理完了") || line.includes("全処理完了")) {
+          setCompleted(true);
+        }
+      });
+
+      // Pythonの実行スタート（streaming版）
+      await invoke("run_python_script_streaming", {
+        script,
+        param: JSON.stringify(params),
+      });
+
+      return () => {
+        unlisten();
+      };
+    };
+
+    startPython();
   }, []);
 
   const handleUpdateCheck = async () => {
@@ -34,8 +56,15 @@ export default function Page() {
   return (
     <div className="p-4 space-y-4">
       <div>
-        <h2 className="text-lg font-bold">Python実行結果</h2>
-        <pre className="mt-2 p-2 bg-gray-100 border rounded">{result}</pre>
+        <h2 className="text-lg font-bold">Python 実行ログ</h2>
+        <pre className="mt-2 p-2 bg-gray-100 border rounded h-80 overflow-auto whitespace-pre-wrap">
+          {logLines.map((line, idx) => (
+            <div key={idx}>{line}</div>
+          ))}
+        </pre>
+        {completed && (
+          <p className="text-green-600 mt-2 font-medium">✅ 処理が完了しました！</p>
+        )}
       </div>
 
       <div className="p-4 border rounded">
