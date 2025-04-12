@@ -13,47 +13,31 @@ export default function Page() {
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
   const logContainerRef = useRef(null);
 
-  // ユーザーのスクロール操作を検知するイベントハンドラ
   const handleScroll = () => {
     if (!logContainerRef.current) return;
-    
     const { scrollTop, scrollHeight, clientHeight } = logContainerRef.current;
-    // スクロール位置が最下部から20px以内なら自動スクロールを有効化
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 20;
-    
-    setShouldAutoScroll(isNearBottom);
+    setShouldAutoScroll(scrollHeight - scrollTop - clientHeight < 20);
   };
 
-  // スクロールを最下部に移動する関数（useCallbackでメモ化）
   const scrollToBottom = useCallback(() => {
     if (logContainerRef.current && shouldAutoScroll) {
-      // 強制的にスクロールを実行
-      const container = logContainerRef.current;
-      container.scrollTop = container.scrollHeight;
+      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
     }
   }, [shouldAutoScroll]);
 
-  // ログが更新されたときに強制的にスクロールを実行
   useEffect(() => {
     if (logLines.length > 0 && shouldAutoScroll) {
-      // 複数の方法を組み合わせて確実にスクロールを実行
-      // 1. 即時実行
       scrollToBottom();
-      
-      // 2. 次のフレームで実行
       requestAnimationFrame(scrollToBottom);
-      
-      // 3. 少し遅延させて実行（レンダリング完了後）
       setTimeout(scrollToBottom, 50);
     }
   }, [logLines, scrollToBottom]);
 
-  // スクロールイベントリスナーの登録と解除
   useEffect(() => {
     const logContainer = logContainerRef.current;
     if (logContainer) {
-      logContainer.addEventListener('scroll', handleScroll);
-      return () => logContainer.removeEventListener('scroll', handleScroll);
+      logContainer.addEventListener("scroll", handleScroll);
+      return () => logContainer.removeEventListener("scroll", handleScroll);
     }
   }, []);
 
@@ -70,38 +54,31 @@ export default function Page() {
       };
 
       try {
-        // リスナーを登録（ログ受信）- マウント状態を確認
         unlistenCallback = await listen("python-log", (event) => {
-          // コンポーネントがアンマウントされていたら何もしない
           if (isUnmounted) return;
-          
-          const line = event.payload;
-          
-          // 重複を防ぐためのフィルタリング
-          // 同じ行が短時間に複数回来た場合は無視する
+
+          const log = event.payload;
+          if (
+            typeof log !== "object" ||
+            !("message" in log && "level" in log && "source" in log)
+          ) {
+            console.warn("受信ログが構造化されていません:", log);
+            return;
+          }
+
           setLogLines((prev) => {
-            // 直近の行と同じ内容なら追加しない
-            if (prev.length > 0 && prev[prev.length - 1] === line) {
-              return prev;
-            }
-            
-            // 新しいログを追加した後、次のフレームでスクロールを実行
-            requestAnimationFrame(() => {
-              if (logContainerRef.current && shouldAutoScroll) {
-                logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
-              }
-            });
-            
-            return [...prev, line];
+            if (prev.length > 0 && prev[prev.length - 1].message === log.message) return prev;
+            return [...prev, log];
           });
 
-          // 任意：終了っぽいワードが来たらcompletedにする
-          if (line.includes("CSV処理完了") || line.includes("全処理完了")) {
+          if (
+            log.message.includes("CSV処理完了") ||
+            log.message.includes("全処理完了")
+          ) {
             setCompleted(true);
           }
         });
 
-        // Pythonの実行スタート（streaming版）
         if (!isUnmounted) {
           await invoke("run_python_script_streaming", {
             script,
@@ -115,7 +92,6 @@ export default function Page() {
 
     startPython();
 
-    // クリーンアップ関数
     return () => {
       isUnmounted = true;
       if (unlistenCallback) {
@@ -131,20 +107,54 @@ export default function Page() {
     setLoading(false);
   };
 
+  const renderLogLine = (log, idx) => {
+    let color = "text-gray-700";
+    let icon = "📝";
+
+    switch (log.level.toUpperCase()) {
+      case "INFO":
+        color = "text-blue-600";
+        icon = "ℹ️";
+        break;
+      case "ERROR":
+        color = "text-red-600 font-bold";
+        icon = "❌";
+        break;
+      case "WARN":
+      case "WARNING":
+        color = "text-yellow-600";
+        icon = "⚠️";
+        break;
+      case "DEBUG":
+        color = "text-purple-600";
+        icon = "🐛";
+        break;
+      default:
+        icon = "🧾";
+        break;
+    }
+
+    return (
+      <div key={idx} className={`mb-1 ${color} font-mono text-sm`}>
+        <span className="mr-2">{icon}</span>
+        <span className="opacity-70">[{log.source}]</span>{" "}
+        <span>{log.message}</span>
+      </div>
+    );
+  };
+
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-6">
       <div>
         <h2 className="text-lg font-bold">Python 実行ログ</h2>
-        <pre 
+        <div
           ref={logContainerRef}
-          className="mt-2 p-2 bg-gray-100 border rounded h-80 overflow-auto whitespace-pre-wrap"
-          style={{ scrollBehavior: 'smooth' }}
+          className="mt-2 p-2 bg-gray-100 border rounded h-80 overflow-auto whitespace-pre-wrap font-mono text-sm"
+          style={{ scrollBehavior: "smooth" }}
           onScroll={handleScroll}
         >
-          {logLines.map((line, idx) => (
-            <div key={idx}>{line}</div>
-          ))}
-        </pre>
+          {logLines.map(renderLogLine)}
+        </div>
         {completed && (
           <p className="text-green-600 mt-2 font-medium">✅ 処理が完了しました！</p>
         )}

@@ -3,6 +3,14 @@ use tauri::Emitter;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use std::collections::HashSet;
+use serde::Serialize;
+
+#[derive(Serialize)]
+struct LogPayload {
+    message: String,
+    level: String,
+    source: String,
+}
 
 // 🔽 ログをファイルに書き出す関数（日付ごとにファイルを分ける）
 fn write_log(level: &str, message: &str) {
@@ -21,14 +29,20 @@ fn write_log(level: &str, message: &str) {
 }
 
 // emitとログ書き出しを統合した補助関数
-async fn safe_emit<T: serde::Serialize>(
+async fn safe_emit(
     window: &tauri::Window,
     event: &str,
-    payload: T,
-    task_name: &str
+    message: String,
+    level: &str,
+    source: &str,
 ) {
+    let payload = LogPayload {
+        message,
+        level: level.to_string(),
+        source: source.to_string(),
+    };
     if let Err(err) = window.emit(event, &payload) {
-        write_log("ERROR", &format!("[{}] emit失敗: {:?}", task_name, err));
+        write_log("ERROR", &format!("[{}] emit失敗: {:?}", source, err));
     }
 }
 
@@ -149,7 +163,7 @@ async fn run_python_script_streaming(window: tauri::Window, script: String, para
                 } else {
                     "python-log"
                 };
-                safe_emit(&window_clone, event, &line, "stdout-task").await;
+                safe_emit(&window_clone, event, line.clone(), "INFO", "stdout-task").await;
                 sent_set.insert(line);
             }
         }
@@ -168,13 +182,13 @@ async fn run_python_script_streaming(window: tauri::Window, script: String, para
                     let mut sent_set = sent_messages_clone.lock().await;
                     if serde_json::from_str::<serde_json::Value>(&line).is_ok() {
                         if !sent_set.contains(&line) {
-                            safe_emit(&window_clone, "python-json-error", &line, "stderr-task").await;
+                            safe_emit(&window_clone, "python-json-error", line.clone(), "ERROR", "stderr-task").await;
                             sent_set.insert(line);
                         }
                     } else {
                         let error_msg = format!("[ERROR] {}", line);
                         if !sent_set.contains(&error_msg) {
-                            safe_emit(&window_clone, "python-log", &error_msg, "stderr-task").await;
+                            safe_emit(&window_clone, "python-log", error_msg.clone(), "ERROR", "stderr-task").await;
                             sent_set.insert(error_msg);
                         }
                     }
@@ -191,12 +205,12 @@ async fn run_python_script_streaming(window: tauri::Window, script: String, para
             Ok(status) => {
                 let msg = format!("Pythonプロセス終了: {}", status);
                 write_log("INFO", &format!("[wait-task] {}", msg));
-                safe_emit(&window_clone, "python-log", format!("[INFO] {}", msg), "wait-task").await;
+                safe_emit(&window_clone, "python-log", format!("[INFO] {}", msg), "INFO", "wait-task").await;
             }
             Err(e) => {
                 let msg = format!("Pythonプロセス待機エラー: {}", e);
                 write_log("ERROR", &format!("[wait-task] {}", msg));
-                safe_emit(&window_clone, "python-log", format!("[ERROR] {}", msg), "wait-task").await;
+                safe_emit(&window_clone, "python-log", format!("[ERROR] {}", msg), "ERROR", "wait-task").await;
             }
         }
     });
@@ -211,7 +225,6 @@ async fn run_python_script_streaming(window: tauri::Window, script: String, para
 
     Ok(())
 }
-
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
