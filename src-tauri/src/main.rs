@@ -2,5 +2,9 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
+<<<<<<< HEAD
   app_lib::run();
+=======
+    app_lib::run();
+>>>>>>> feature/uploader
 }

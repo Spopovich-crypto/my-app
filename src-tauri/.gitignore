@@ -4,4 +4,9 @@
 /gen/schemas
 
 /python-embed/Lib/site-packages/
+<<<<<<< HEAD
 __pycache__
+=======
+__pycache__
+chinami-log.txt
+>>>>>>> feature/uploader

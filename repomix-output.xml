@@ -48,6 +48,10 @@ The content is organized as follows:
 app/globals.css
 app/layout.js
 app/page.js
+<<<<<<< HEAD
+=======
+app/utils/checkForUpdate.js
+>>>>>>> feature/uploader
 app/utils/invokePython.js
 jsconfig.json
 next.config.mjs
@@ -55,9 +59,19 @@ package.json
 postcss.config.mjs
 README.md
 src-tauri/.gitignore
+<<<<<<< HEAD
 src-tauri/build.rs
 src-tauri/capabilities/default.json
 src-tauri/Cargo.toml
+=======
+src-tauri/.taurignore
+src-tauri/2
+src-tauri/build.rs
+src-tauri/capabilities/default.json
+src-tauri/capabilities/desktop.json
+src-tauri/Cargo.toml
+src-tauri/chinami-log.txt
+>>>>>>> feature/uploader
 src-tauri/python-embed/LICENSE.txt
 src-tauri/python-embed/python311._pth
 src-tauri/src-python/libs/csv_to_db/_find_csv.py
@@ -73,6 +87,7 @@ tailwind.config.js
 <files>
 This section contains the contents of the repository's files.
 
+<<<<<<< HEAD
 <file path="app/utils/invokePython.js">
 // 📁 frontend/utils/invokePython.js
 import { invoke } from "@tauri-apps/api/core";
@@ -96,6 +111,8 @@ export async function runPythonScript(script, param) {
 }
 </file>
 
+=======
+>>>>>>> feature/uploader
 <file path=".eslintrc.json">
 {
   "extends": "next/core-web-vitals"
@@ -204,6 +221,75 @@ export default function RootLayout({ children }) {
 }
 </file>
 
+<<<<<<< HEAD
+=======
+<file path="app/utils/checkForUpdate.js">
+// 📁 frontend/utils/checkForUpdate.js
+import { check } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
+
+/**
+ * アップデート確認＆実行関数（Tauri Plugin Updater 対応）
+ */
+export async function checkForUpdate() {
+  try {
+    const update = await check();
+    if (update) {
+      let downloaded = 0;
+      let contentLength = 0;
+
+      await update.downloadAndInstall((event) => {
+        switch (event.event) {
+          case "Started":
+            contentLength = event.data.contentLength;
+            console.log(`🔽 ダウンロード開始: ${contentLength} bytes`);
+            break;
+          case "Progress":
+            downloaded += event.data.chunkLength;
+            console.log(`📦 ${downloaded} / ${contentLength} bytes`);
+            break;
+          case "Finished":
+            console.log("✅ ダウンロード完了");
+            break;
+        }
+      });
+
+      console.log("🚀 アップデート完了、再起動します");
+      await relaunch();
+      return `アップデートを適用して再起動しました（v${update.version}）`;
+    } else {
+      return "✅ 最新バージョンです。";
+    }
+  } catch (err) {
+    return `アップデート確認エラー: ${String(err)}`;
+  }
+}
+</file>
+
+<file path="app/utils/invokePython.js">
+// 📁 frontend/utils/invokePython.js
+import { invoke } from "@tauri-apps/api/core";
+
+/**
+ * PythonスクリプトをTauri経由で実行する共通関数
+ * @param {string} script - Pythonファイル名（例: "main.py"）
+ * @param {Object} params - Pythonに渡す引数オブジェクト
+ * @returns {Promise<string>} Pythonスクリプトからの文字列出力 or エラー文字列
+ */
+export async function runPythonScript(script, param) {
+  try {
+    const result = await invoke("run_python_script", {
+      script,
+      param: JSON.stringify(param),
+    });
+    return String(result);
+  } catch (error) {
+    return `Python実行エラー: ${String(error)}`;
+  }
+}
+</file>
+
+>>>>>>> feature/uploader
 <file path="jsconfig.json">
 {
   "compilerOptions": {
@@ -225,10 +311,24 @@ const config = {
 export default config;
 </file>
 
+<<<<<<< HEAD
 <file path="src-tauri/build.rs">
 fn main() {
   tauri_build::build()
 }
+=======
+<file path="src-tauri/.taurignore">
+chinami-log.txt
+</file>
+
+<file path="src-tauri/2">
+up to date, audited 370 packages in 2s
+
+146 packages are looking for funding
+  run `npm fund` for details
+
+found 0 vulnerabilities
+>>>>>>> feature/uploader
 </file>
 
 <file path="src-tauri/capabilities/default.json">
@@ -245,6 +345,26 @@ fn main() {
 }
 </file>
 
+<<<<<<< HEAD
+=======
+<file path="src-tauri/capabilities/desktop.json">
+{
+  "identifier": "desktop-capability",
+  "platforms": [
+    "macOS",
+    "windows",
+    "linux"
+  ],
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "updater:default"
+  ]
+}
+</file>
+
+>>>>>>> feature/uploader
 <file path="src-tauri/python-embed/LICENSE.txt">
 A. HISTORY OF THE SOFTWARE
 ==========================
@@ -968,6 +1088,7 @@ def run_csv_to_db(args):
     process_csv()
 </file>
 
+<<<<<<< HEAD
 <file path="src-tauri/src/main.rs">
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
@@ -977,6 +1098,8 @@ fn main() {
 }
 </file>
 
+=======
+>>>>>>> feature/uploader
 <file path="tailwind.config.js">
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -1019,6 +1142,7 @@ const nextConfig = {
 export default nextConfig;
 </file>
 
+<<<<<<< HEAD
 <file path="README.md">
 ```
 npm run tauri dev
@@ -1032,6 +1156,8 @@ uv pip install pandas --target ./python-embed/Lib/site-packages
 ```
 </file>
 
+=======
+>>>>>>> feature/uploader
 <file path="src-tauri/.gitignore">
 # Generated by Cargo
 # will have compiled files and executables
@@ -1042,6 +1168,7 @@ uv pip install pandas --target ./python-embed/Lib/site-packages
 __pycache__
 </file>
 
+<<<<<<< HEAD
 <file path="src-tauri/Cargo.toml">
 [package]
 name = "app"
@@ -1068,6 +1195,63 @@ serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
 tauri = { version = "2.4.1", features = [] }
 tauri-plugin-log = "2.0.0-rc"
+=======
+<file path="src-tauri/build.rs">
+fn main() {
+    tauri_build::build()
+}
+</file>
+
+<file path="src-tauri/chinami-log.txt">
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+>>>>>>> feature/uploader
 </file>
 
 <file path="src-tauri/python-embed/python311._pth">
@@ -1118,6 +1302,7 @@ if __name__ == "__main__":
     result = main(args_dict)
 </file>
 
+<<<<<<< HEAD
 <file path="src-tauri/src/lib.rs">
 #[tauri::command]
 fn run_python_script(script: String, param: String) -> Result<String, String> {
@@ -1163,6 +1348,110 @@ pub fn run() {
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
+=======
+<file path="src-tauri/src/main.rs">
+// Prevents additional console window on Windows in release, DO NOT REMOVE!!
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+
+fn main() {
+    app_lib::run();
+}
+</file>
+
+<file path="README.md">
+```
+
+@tauri-apps/plugin-process
+
+
+npm run tauri dev
+npm run tauri build
+
+cd src-tauri
+cargo clean
+
+uv pip install pandas --target ./python-embed/Lib/site-packages
+
+```
+
+1. 初回のみ: 秘密鍵と公開鍵を作る
+```
+npm run tauri signer generate // 
+```
+
+2. tauri.conf.jsonに公開鍵を設定
+```
+  "createUpdaterArtifacts": true,
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IENCNUI3NjdCRTE2MUNBMkIKUldRcnltSGhlM1pieTNhdWppcW1IdkxMMzBPYUxiZ0h3cWg0OEIwS002MkN1VEJ4WFNpWGdGSHAK",
+      "endpoints": [
+        "http://localhost:8080/latest.json"
+      ],
+      "dangerousInsecureTransport": true,
+      "dialog": true
+    }
+  }
+```
+
+3. 環境変数に設定してビルド
+```
+$env:TAURI_SIGNING_PRIVATE_KEY="TAURI_SIGNING_PRIVATE_KEY=dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZWNyZXQga2V5ClJXUlRZMEl5NU0rYUhXbm1QVWpjMWpzeGtDd0JiWjYrcDR3cGpxNW9lblhrZENZOFhHUUFBQkFBQUFBQUFBQUFBQUlBQUFBQXpoWXVUaUNpSy9tM3ZGckdBMHRBT21VY3MxaHFSaG91Vm53dVNRYTlRd2xoaFVIYVl5eEVuWXcyYUZpSHVNL2haZjVjZHJHdmtNVUs4c21vT3o4WkRsZkowNTk2TE9pZFd6L1VLNFFXYUhlUlJsMVovUkErOERjRmJzODZ4bG1odFNQZTJvKzk3Wk09Cg=="
+$env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD="chinami"
+npm run tauri build
+```
+
+```
+Please enter a password to protect the secret key.
+Password: 
+
+<empty>
+Password (one more time): 
+
+<empty>
+Deriving a key from the password in order to encrypt the secret key... done
+
+Your secret key was generated successfully - Keep it secret!
+dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZWNyZXQga2V5ClJXUlRZMEl5Q1kzaDhlZjl2TUdvWGtXbmswOWUycE1QMU4wajBkb1ZHZGZMTHVIa2tsUUFBQkFBQUFBQUFBQUFBQUlBQUFBQVdSbVJ4cEpuc2hMVVgwY25yd2cwdjlKS2gyMFc0U3MzQVhQeHVFOEFQTytKaVNpRHRVeXU2TzRFS21JMzdiM2xyazRUaCtFRTVNQmhxU0M2dEZjQkxPbFNrb0pDU21KeWlWc3FKSnE4YmdhNkUyRDJGV3NiRVc1Y2gwL2Z0WnhNZkxIeS8zRS9FdzA9Cg==
+
+
+Your public key was generated successfully:
+dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDRDMDQxOUEzNENENDU0MzkKUldRNVZOUk1veGtFVFBWN1dwMGZuVzVVMzVOc20rNzM0YkIzTzRIb3d0emJQWkZtUCtLNm1IZm8K
+
+Add the public key in your tauri.conf.json
+```
+</file>
+
+<file path="src-tauri/Cargo.toml">
+[package]
+name = "app"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["you"]
+license = ""
+repository = ""
+edition = "2021"
+rust-version = "1.77.2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.1.1", features = [] }
+
+[dependencies]
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+log = "0.4"
+tauri = { version = "2.4.1", features = [] }
+tauri-plugin-log = "2.0.0-rc"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-updater = "2"
+>>>>>>> feature/uploader
 </file>
 
 <file path="package.json">
@@ -1179,6 +1468,11 @@ pub fn run() {
   },
   "dependencies": {
     "@tauri-apps/api": "^2.4.1",
+<<<<<<< HEAD
+=======
+    "@tauri-apps/plugin-process": "^2.2.1",
+    "@tauri-apps/plugin-updater": "^2.7.0",
+>>>>>>> feature/uploader
     "next": "14.2.28",
     "react": "^18",
     "react-dom": "^18"
@@ -1193,11 +1487,86 @@ pub fn run() {
 }
 </file>
 
+<<<<<<< HEAD
 <file path="src-tauri/tauri.conf.json">
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "my-app",
   "version": "0.1.0",
+=======
+<file path="src-tauri/src/lib.rs">
+// 🔽 ログをファイルに書き出す関数
+fn write_log(line: &str) {
+    use std::fs::OpenOptions;
+    use std::io::Write;
+    use std::path::PathBuf;
+
+    let log_path = PathBuf::from("chinami-log.txt"); // ← カレントディレクトリに出力
+    if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(log_path) {
+        let _ = writeln!(file, "{}", line);
+    }
+}
+
+#[tauri::command]
+fn run_python_script(script: String, param: String) -> Result<String, String> {
+    use std::env;
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+
+    let current_dir = env::current_dir().map_err(|e| e.to_string())?;
+    println!("Current working directory: {:?}", current_dir);
+    write_log(&format!("Current working directory: {:?}", current_dir));
+
+    let script_path = format!("src-python/{}", script); // ここで任意の.pyを指定
+    let mut child = Command::new("python-embed/python.exe")
+        .arg(&script_path)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| e.to_string())?;
+
+    if let Some(stdin) = &mut child.stdin {
+        stdin
+            .write_all(param.as_bytes())
+            .map_err(|e| e.to_string())?;
+    }
+
+    let output = child.wait_with_output().map_err(|e| e.to_string())?;
+
+    if output.status.success() {
+        Ok(String::from_utf8_lossy(&output.stdout).to_string())
+    } else {
+        Err(String::from_utf8_lossy(&output.stderr).to_string())
+    }
+}
+
+#[cfg_attr(mobile, tauri::mobile_entry_point)]
+pub fn run() {
+    tauri::Builder::default()
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .setup(|app| {
+            if cfg!(debug_assertions) {
+                app.handle().plugin(
+                    tauri_plugin_log::Builder::default()
+                        .level(log::LevelFilter::Info)
+                        .build(),
+                )?;
+            }
+            Ok(())
+        })
+        .invoke_handler(tauri::generate_handler![run_python_script])
+        .run(tauri::generate_context!())
+        .expect("error while running tauri application");
+}
+</file>
+
+<file path="src-tauri/tauri.conf.json">
+{
+  "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Chinami",
+  "version": "0.1.1",
+>>>>>>> feature/uploader
   "identifier": "com.chinami.dev",
   "build": {
     "frontendDist": "../out",
@@ -1232,8 +1601,22 @@ pub fn run() {
     "resources": [
       "./python-embed",
       "./src-python"
+<<<<<<< HEAD
     ]
   }
+=======
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDRDMDQxOUEzNENENDU0MzkKUldRNVZOUk1veGtFVFBWN1dwMGZuVzVVMzVOc20rNzM0YkIzTzRIb3d0emJQWkZtUCtLNm1IZm8K",
+      "endpoints": ["http://localhost:8080/latest.json"],
+      "dangerousInsecureTransport": true,
+      "windows": {"installMode": "passive"}
+      }
+    }
+>>>>>>> feature/uploader
 }
 </file>
 
@@ -1242,9 +1625,24 @@ pub fn run() {
 
 import { useEffect, useState } from "react";
 import { runPythonScript } from "./utils/invokePython";
+<<<<<<< HEAD
 
 export default function Page() {
   const [result, setResult] = useState("");
+=======
+// import { checkForUpdate } from "./utils/checkForUpdate";
+
+export default function Page() {
+  const [result, setResult] = useState("");
+  // const [message, setMessage] = useState("まだ未確認");
+  // const [loading, setLoading] = useState(false);
+
+  // const handleUpdateCheck = async () => {
+  //   setLoading(true);
+  //   const result = await checkForUpdate();
+  //   setMessage(result);
+  //   setLoading(false);}
+>>>>>>> feature/uploader
 
   useEffect(() => {
     (async () => {
@@ -1263,6 +1661,20 @@ export default function Page() {
     <div className="p-4">
       <h2 className="text-lg font-bold">Python実行結果</h2>
       <pre className="mt-2 p-2 bg-gray-100 border rounded">{result}</pre>
+<<<<<<< HEAD
+=======
+      {/* <div className="p-4 border rounded">
+        <h2 className="text-lg font-bold mb-2">アップデート確認</h2>
+        <button
+          onClick={handleUpdateCheck}
+          disabled={loading}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
+        >
+          {loading ? "確認中..." : "アップデート確認"}
+        </button>
+        <p className="mt-4">{message}</p>
+      </div> */}
+>>>>>>> feature/uploader
     </div>
   );
 }
