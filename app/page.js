@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { checkForUpdate } from "./utils/checkForUpdate";
@@ -18,20 +18,6 @@ export default function Page() {
     const { scrollTop, scrollHeight, clientHeight } = logContainerRef.current;
     setShouldAutoScroll(scrollHeight - scrollTop - clientHeight < 20);
   };
-
-  const scrollToBottom = useCallback(() => {
-    if (logContainerRef.current && shouldAutoScroll) {
-      logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
-    }
-  }, [shouldAutoScroll]);
-
-  useEffect(() => {
-    if (logLines.length > 0 && shouldAutoScroll) {
-      scrollToBottom();
-      requestAnimationFrame(scrollToBottom);
-      setTimeout(scrollToBottom, 50);
-    }
-  }, [logLines, scrollToBottom]);
 
   useEffect(() => {
     const logContainer = logContainerRef.current;
@@ -68,7 +54,17 @@ export default function Page() {
 
           setLogLines((prev) => {
             if (prev.length > 0 && prev[prev.length - 1].message === log.message) return prev;
-            return [...prev, log];
+
+            const next = [...prev, log];
+
+            // 💥 これが最終兵器：ログ追加直後に強制スクロール
+            requestAnimationFrame(() => {
+              if (logContainerRef.current && shouldAutoScroll) {
+                logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+              }
+            });
+
+            return next;
           });
 
           if (
