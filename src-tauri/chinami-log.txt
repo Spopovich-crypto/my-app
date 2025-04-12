@@ -61,3 +61,5 @@ Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-pytho
 Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
 Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
 >>>>>>> feature/uploader
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"

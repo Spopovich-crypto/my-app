@@ -1,11 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Chinami",
-<<<<<<< HEAD
-  "version": "0.1.0",
-=======
   "version": "0.1.1",
->>>>>>> feature/uploader
   "identifier": "com.chinami.dev",
   "build": {
     "frontendDist": "../out",
@@ -40,10 +36,6 @@
     "resources": [
       "./python-embed",
       "./src-python"
-<<<<<<< HEAD
-    ]
-  }
-=======
     ],
     "createUpdaterArtifacts": true
   },
@@ -56,5 +48,4 @@
       "windows": {"installMode": "passive"}
       }
     }
->>>>>>> feature/uploader
 }

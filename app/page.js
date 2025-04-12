@@ -2,18 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { runPythonScript } from "./utils/invokePython";
-<<<<<<< HEAD
-
-export default function Page() {
-  const [result, setResult] = useState("");
-=======
 import { checkForUpdate } from "./utils/checkForUpdate"; // ← これも使う
 
 export default function Page() {
   const [result, setResult] = useState("");
   const [updateMessage, setUpdateMessage] = useState("");
   const [loading, setLoading] = useState(false);
->>>>>>> feature/uploader
 
   useEffect(() => {
     (async () => {
@@ -28,12 +22,6 @@ export default function Page() {
     })();
   }, []);
 
-<<<<<<< HEAD
-  return (
-    <div className="p-4">
-      <h2 className="text-lg font-bold">Python実行結果</h2>
-      <pre className="mt-2 p-2 bg-gray-100 border rounded">{result}</pre>
-=======
   const handleUpdateCheck = async () => {
     setLoading(true);
     const msg = await checkForUpdate();
@@ -59,7 +47,6 @@ export default function Page() {
         </button>
         {updateMessage && <p className="mt-4">{updateMessage}</p>}
       </div>
->>>>>>> feature/uploader
     </div>
   );
 }

@@ -1,11 +1,8 @@
 ```
-<<<<<<< HEAD
-=======
 
 @tauri-apps/plugin-process
 
 
->>>>>>> feature/uploader
 npm run tauri dev
 npm run tauri build
 
@@ -15,8 +12,6 @@ cargo clean
 uv pip install pandas --target ./python-embed/Lib/site-packages
 
 ```
-<<<<<<< HEAD
-=======
 
 1. 初回のみ: 秘密鍵と公開鍵を作る
 ```
@@ -55,4 +50,3 @@ dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZWNyZXQga2V5ClJXUlRZMEl5Q1kzaDhl
 public key:
 dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDRDMDQxOUEzNENENDU0MzkKUldRNVZOUk1veGtFVFBWN1dwMGZuVzVVMzVOc20rNzM0YkIzTzRIb3d0emJQWkZtUCtLNm1IZm8K
 ```
->>>>>>> feature/uploader
