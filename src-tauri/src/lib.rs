@@ -1,12 +1,15 @@
+use chrono::Local;
+
 // 🔽 ログをファイルに書き出す関数
-fn write_log(line: &str) {
+fn write_log(level: &str, message: &str) {
     use std::fs::OpenOptions;
     use std::io::Write;
     use std::path::PathBuf;
 
-    let log_path = PathBuf::from("chinami-log.txt"); // ← カレントディレクトリに出力
+    let log_path = PathBuf::from("chinami-log.txt");
     if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(log_path) {
-        let _ = writeln!(file, "{}", line);
+        let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S");
+        let _ = writeln!(file, "[{}] [{}] {}", timestamp, level, message);
     }
 }
 
@@ -20,10 +23,10 @@ fn run_python_script(script: String, param: String) -> Result<String, String> {
 
     const CREATE_NO_WINDOW: u32 = 0x08000000; // コンソールウィンドウを表示しないフラグ
 
-    let current_dir = env::current_dir().map_err(|e| e.to_string())?;
+    // let current_dir = env::current_dir().map_err(|e| e.to_string())?;
     // write_log(&format!("Current working directory: {:?}", current_dir));
 
-    write_log(&format!("PARAM: {}", param));
+    write_log("INFO", &format!("PARAM: {}", param));
     // write_log(&format!("PARAM BYTES: {:?}", param.as_bytes()));
 
     let script_path = format!("src-python/{}", script);
@@ -51,7 +54,7 @@ fn run_python_script(script: String, param: String) -> Result<String, String> {
 
     let stdout_str = String::from_utf8(output.stdout)
         .map_err(|e| {
-            write_log(&format!("STDOUT decode error: {:?}", e));
+            write_log("ERROR", &format!("STDOUT decode error: {:?}", e));
             format!("出力のデコードに失敗しました（UTF-8じゃない可能性）")
         })?;
 
