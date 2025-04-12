@@ -1,30 +1,28 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { invoke } from "@tauri-apps/api/core";
+import { runPythonScript } from "./utils/invokePython";
 
-export default function Home() {
+export default function Page() {
   const [result, setResult] = useState("");
 
   useEffect(() => {
-    const run = async () => {
-      try {
-        const res = await invoke("run_embedded_python", {
-          param: JSON.stringify({ name: "Chinami", message: "Hello!" })
-        });
-        setResult(String(res));
-      } catch (error) {
-        setResult(`エラー: ${String(error)}`);
-      }
-    };
-    run();
+    (async () => {
+      const script = "main.py";
+      const params = {
+        mode: "csv",
+        folder: "./data",
+        plant_name: "工場B",
+      };
+      const output = await runPythonScript(script, params);
+      setResult(output);
+    })();
   }, []);
 
   return (
-    <div className="p-4 space-y-2">
-      <h1 className="text-xl font-bold">Next.js × Tauri × Python</h1>
-      <p>結果：</p>
-      <pre className="p-2 bg-gray-100 border rounded">{result}</pre>
+    <div className="p-4">
+      <h2 className="text-lg font-bold">Python実行結果</h2>
+      <pre className="mt-2 p-2 bg-gray-100 border rounded">{result}</pre>
     </div>
   );
 }

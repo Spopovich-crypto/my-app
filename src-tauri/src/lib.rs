@@ -1,17 +1,18 @@
 #[tauri::command]
-fn run_embedded_python(param: String) -> Result<String, String> {
+fn run_python_script(script: String, param: String) -> Result<String, String> {
     use std::process::{Command, Stdio};
     use std::io::Write;
 
-    let mut child = Command::new("python-embed/python.exe") // ← 相対パスでOK
-        .arg("src-python/main.py")
+    let script_path = format!("src-python/{}", script); // ここで任意の.pyを指定
+    let mut child = Command::new("python-embed/python.exe")
+        .arg(&script_path)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
         .map_err(|e| e.to_string())?;
 
-    if let Some(stdin) = child.stdin.as_mut() {
+    if let Some(stdin) = &mut child.stdin {
         stdin.write_all(param.as_bytes()).map_err(|e| e.to_string())?;
     }
 
@@ -37,7 +38,7 @@ pub fn run() {
       }
       Ok(())
     })
-    .invoke_handler(tauri::generate_handler![run_embedded_python])
+    .invoke_handler(tauri::generate_handler![run_python_script])
     .run(tauri::generate_context!())
     .expect("error while running tauri application");
 }
