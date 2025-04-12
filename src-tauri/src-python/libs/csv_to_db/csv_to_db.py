@@ -5,6 +5,7 @@ import json
 import sys
 
 def run_csv_to_db(args):
+    raise ValueError("むりぽ")
     # 仮の結果
     result = {
         "status": "success",
@@ -12,8 +13,7 @@ def run_csv_to_db(args):
         "processed_files": ["log1.csv", "log2.csv"],
         "row_count": 2480
     }
-    json_output = json.dumps(result, ensure_ascii=False, indent=2) + "\n"
-
+    json_output = json.dumps(result, ensure_ascii=False, indent=2)
     sys.stdout.buffer.write(json_output.encode("utf-8"))
     sys.stdout.buffer.write(b"\n")
 

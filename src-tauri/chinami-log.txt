@@ -1,2 +1,104 @@
 PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
 PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
+[2025-04-13 00:30:02] [INFO] PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
+[2025-04-13 00:30:02] [INFO] PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
+[2025-04-13 00:30:19] [INFO] PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
+[2025-04-13 00:30:19] [INFO] PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
+[2025-04-13 00:31:41] [INFO] PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
+[2025-04-13 00:31:41] [INFO] PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
+[2025-04-13 00:35:21] [INFO] PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
+[2025-04-13 00:35:21] [INFO] PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
+[2025-04-13 00:36:50] [INFO] PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
+[2025-04-13 00:36:50] [INFO] PYTHON OUTPUT: {
+  "mode": "csv",
+  "folder": "./data",
+  "plant_name": "工場B"
+}
+{
+  "status": "error",
+  "message": "むりぽ",
+  "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\main.py\", line 50, in <module>\n    result = main(args)\n             ^^^^^^^^^^\n  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\main.py\", line 38, in main\n    return run_csv_to_db(args_dict)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\libs\\csv_to_db\\csv_to_db.py\", line 8, in run_csv_to_db\n    raise ValueError(\"むりぽ\")\nValueError: むりぽ\n"
+}
+
+[2025-04-13 00:36:50] [INFO] PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
+[2025-04-13 00:36:50] [INFO] PYTHON OUTPUT: {
+  "mode": "csv",
+  "folder": "./data",
+  "plant_name": "工場B"
+}
+{
+  "status": "error",
+  "message": "むりぽ",
+  "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\main.py\", line 50, in <module>\n    result = main(args)\n             ^^^^^^^^^^\n  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\main.py\", line 38, in main\n    return run_csv_to_db(args_dict)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\libs\\csv_to_db\\csv_to_db.py\", line 8, in run_csv_to_db\n    raise ValueError(\"むりぽ\")\nValueError: むりぽ\n"
+}
+
+[2025-04-13 00:40:44] [INFO] PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
+[2025-04-13 00:40:44] [INFO] PYTHON OUTPUT: {
+  "mode": "csv",
+  "folder": "./data",
+  "plant_name": "工場B"
+}
+{
+  "status": "error",
+  "message": "むりぽ",
+  "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\main.py\", line 50, in <module>\n    result = main(args)\n             ^^^^^^^^^^\n  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\main.py\", line 38, in main\n    return run_csv_to_db(args_dict)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\libs\\csv_to_db\\csv_to_db.py\", line 8, in run_csv_to_db\n    raise ValueError(\"むりぽ\")\nValueError: むりぽ\n"
+}
+
+[2025-04-13 00:40:44] [INFO] PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
+[2025-04-13 00:40:44] [INFO] PYTHON OUTPUT: {
+  "mode": "csv",
+  "folder": "./data",
+  "plant_name": "工場B"
+}
+{
+  "status": "error",
+  "message": "むりぽ",
+  "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\main.py\", line 50, in <module>\n    result = main(args)\n             ^^^^^^^^^^\n  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\main.py\", line 38, in main\n    return run_csv_to_db(args_dict)\n           ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\libs\\csv_to_db\\csv_to_db.py\", line 8, in run_csv_to_db\n    raise ValueError(\"むりぽ\")\nValueError: むりぽ\n"
+}
+
+[2025-04-13 00:42:03] [INFO] PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
+[2025-04-13 00:42:03] [INFO] PYTHON OUTPUT: {
+  "mode": "csv",
+  "folder": "./data",
+  "plant_name": "工場B"
+}
+{
+  "status": "error",
+  "message": "むりぽ",
+  "traceback": [
+    "Traceback (most recent call last):",
+    "  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\main.py\", line 50, in <module>",
+    "    result = main(args)",
+    "             ^^^^^^^^^^",
+    "  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\main.py\", line 38, in main",
+    "    return run_csv_to_db(args_dict)",
+    "           ^^^^^^^^^^^^^^^^^^^^^^^^",
+    "  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\libs\\csv_to_db\\csv_to_db.py\", line 8, in run_csv_to_db",
+    "    raise ValueError(\"むりぽ\")",
+    "ValueError: むりぽ"
+  ]
+}
+
+[2025-04-13 00:42:03] [INFO] PARAM: {"mode":"csv","folder":"./data","plant_name":"工場B"}
+[2025-04-13 00:42:03] [INFO] PYTHON OUTPUT: {
+  "mode": "csv",
+  "folder": "./data",
+  "plant_name": "工場B"
+}
+{
+  "status": "error",
+  "message": "むりぽ",
+  "traceback": [
+    "Traceback (most recent call last):",
+    "  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\main.py\", line 50, in <module>",
+    "    result = main(args)",
+    "             ^^^^^^^^^^",
+    "  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\main.py\", line 38, in main",
+    "    return run_csv_to_db(args_dict)",
+    "           ^^^^^^^^^^^^^^^^^^^^^^^^",
+    "  File \"C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri\\src-python\\libs\\csv_to_db\\csv_to_db.py\", line 8, in run_csv_to_db",
+    "    raise ValueError(\"むりぽ\")",
+    "ValueError: むりぽ"
+  ]
+}
+

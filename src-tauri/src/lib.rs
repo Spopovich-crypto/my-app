@@ -15,7 +15,7 @@ fn write_log(level: &str, message: &str) {
 
 #[tauri::command]
 fn run_python_script(script: String, param: String) -> Result<String, String> {
-    use std::env;
+    // use std::env;
     use std::io::Write;
     use std::process::{Command, Stdio};
     use std::os::windows::process::CommandExt;
@@ -60,11 +60,21 @@ fn run_python_script(script: String, param: String) -> Result<String, String> {
 
     let stderr_str = String::from_utf8(output.stderr)
         .unwrap_or_else(|e| format!("Could not decode stderr: {:?}", e));
+        
+    write_log("INFO", &format!("PYTHON OUTPUT: {}", stdout_str));
 
     // write_log(&format!("STDOUT TEXT: {}", stdout_str));
     // write_log(&format!("STDERR TEXT: {}", stderr_str));
 
     if output.status.success() {
+        // JSONとしてパースして、中の "status" を見る
+        if let Ok(json_val) = serde_json::from_str::<serde_json::Value>(&stdout_str) {
+            if json_val.get("status") == Some(&serde_json::Value::String("error".to_string())) {
+                // Pythonが「status: error」って言ってるならこっちがエラーにする
+                return Err(stdout_str);
+            }
+        }
+    
         Ok(stdout_str)
     } else {
         Err(stderr_str)

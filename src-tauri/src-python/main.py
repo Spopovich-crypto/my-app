@@ -4,6 +4,7 @@ import sys
 import json
 import argparse
 from pathlib import Path
+import traceback
 
 sys.path.append(str(Path(__file__).parent / "libs"))
 from csv_to_db.csv_to_db import run_csv_to_db
@@ -36,15 +37,38 @@ def main(args_dict):
     if mode == "csv":
         return run_csv_to_db(args_dict)
     elif mode == "show":
-        print("show mode")
+        return {"status": "info", "message": "show mode"}
     else:
-        return {"error": f"Unknown mode: {mode}"}
+        return {"status": "error", "message": f"Unknown mode: {mode}"}
 
 if __name__ == "__main__":
-    args = parse_args_from_stdin() if not sys.stdin.isatty() else parse_args_from_cli()
+    try:
+        args = parse_args_from_stdin() if not sys.stdin.isatty() else parse_args_from_cli()
+        sys.stdout.buffer.write(json.dumps(args, ensure_ascii=False, indent=2).encode("utf-8"))
+        sys.stdout.buffer.write(b"\n")
 
-    sys.stdout.buffer.write(json.dumps(args, ensure_ascii=False, indent=2).encode("utf-8"))
-    sys.stdout.buffer.write(b"\n")
+        result = main(args)
+        output = {
+            "status": "success",
+            "result": result
+        }
 
-    result = main(args)
+        json_str = json.dumps(output, ensure_ascii=False, indent=2)
+        sys.stdout.buffer.write(json_str.encode("utf-8"))
+        sys.stdout.buffer.write(b"\n")
+
+    except Exception as e:
+        tb_lines = traceback.format_exc().splitlines()
+        error_output = {
+            "status": "error",
+            "message": str(e),
+            "traceback": tb_lines
+        }
+        json_str = json.dumps(error_output, ensure_ascii=False, indent=2)
+        sys.stdout.buffer.write(json_str.encode("utf-8"))
+        sys.stdout.buffer.write(b"\n")
+        
+
+
+
 
