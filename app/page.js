@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { checkForUpdate } from "./utils/checkForUpdate";
@@ -10,6 +10,52 @@ export default function Page() {
   const [updateMessage, setUpdateMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const logContainerRef = useRef(null);
+
+  // ユーザーのスクロール操作を検知するイベントハンドラ
+  const handleScroll = () => {
+    if (!logContainerRef.current) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = logContainerRef.current;
+    // スクロール位置が最下部から20px以内なら自動スクロールを有効化
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 20;
+    
+    setShouldAutoScroll(isNearBottom);
+  };
+
+  // スクロールを最下部に移動する関数（useCallbackでメモ化）
+  const scrollToBottom = useCallback(() => {
+    if (logContainerRef.current && shouldAutoScroll) {
+      // 強制的にスクロールを実行
+      const container = logContainerRef.current;
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [shouldAutoScroll]);
+
+  // ログが更新されたときに強制的にスクロールを実行
+  useEffect(() => {
+    if (logLines.length > 0 && shouldAutoScroll) {
+      // 複数の方法を組み合わせて確実にスクロールを実行
+      // 1. 即時実行
+      scrollToBottom();
+      
+      // 2. 次のフレームで実行
+      requestAnimationFrame(scrollToBottom);
+      
+      // 3. 少し遅延させて実行（レンダリング完了後）
+      setTimeout(scrollToBottom, 50);
+    }
+  }, [logLines, scrollToBottom]);
+
+  // スクロールイベントリスナーの登録と解除
+  useEffect(() => {
+    const logContainer = logContainerRef.current;
+    if (logContainer) {
+      logContainer.addEventListener('scroll', handleScroll);
+      return () => logContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
 
   useEffect(() => {
     let isUnmounted = false;
@@ -38,6 +84,14 @@ export default function Page() {
             if (prev.length > 0 && prev[prev.length - 1] === line) {
               return prev;
             }
+            
+            // 新しいログを追加した後、次のフレームでスクロールを実行
+            requestAnimationFrame(() => {
+              if (logContainerRef.current && shouldAutoScroll) {
+                logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+              }
+            });
+            
             return [...prev, line];
           });
 
@@ -81,7 +135,12 @@ export default function Page() {
     <div className="p-4 space-y-4">
       <div>
         <h2 className="text-lg font-bold">Python 実行ログ</h2>
-        <pre className="mt-2 p-2 bg-gray-100 border rounded h-80 overflow-auto whitespace-pre-wrap">
+        <pre 
+          ref={logContainerRef}
+          className="mt-2 p-2 bg-gray-100 border rounded h-80 overflow-auto whitespace-pre-wrap"
+          style={{ scrollBehavior: 'smooth' }}
+          onScroll={handleScroll}
+        >
           {logLines.map((line, idx) => (
             <div key={idx}>{line}</div>
           ))}
