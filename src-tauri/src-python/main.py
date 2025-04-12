@@ -7,7 +7,7 @@ from pathlib import Path
 import traceback
 
 sys.path.append(str(Path(__file__).parent / "libs"))
-from csv_to_db.csv_to_db import run_csv_to_db
+from csvutils.main import run_csv_to_db
 
 def parse_args_from_cli():
     parser = argparse.ArgumentParser()

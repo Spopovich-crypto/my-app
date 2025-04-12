@@ -1,11 +1,11 @@
-from ._find_csv import find_csv_files
-from ._process_csv import process_csv
+from .finder import find_csvs
+from .processor import process_csv
 
 import json
 import sys
 
 def run_csv_to_db(args):
-    raise ValueError("むりぽ")
+   
     # 仮の結果
     result = {
         "status": "success",
