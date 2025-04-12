@@ -7,8 +7,11 @@ import argparse
 from pathlib import Path
 import traceback
 
-# 出力バッファを行単位に
-sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', buffering=1)
+# UTF-8エンコーディングを強制的に使用
+# バイナリモードではバッファリング=0（無効）を使用
+import io
+sys.stdout = io.TextIOWrapper(open(sys.stdout.fileno(), 'wb', buffering=0), encoding='utf-8', errors='backslashreplace')
+sys.stderr = io.TextIOWrapper(open(sys.stderr.fileno(), 'wb', buffering=0), encoding='utf-8', errors='backslashreplace')
 
 sys.path.append(str(Path(__file__).parent / "libs"))
 from csvutils.main import run_csv_to_db
@@ -23,13 +26,13 @@ def parse_args_from_cli():
 def parse_args_from_stdin():
     import sys
     raw = sys.stdin.buffer.read()
-    print("🧪 RAW BYTES:", list(raw), file=sys.stderr, flush=True)  # stderrにバイナリ吐く（壊れてるかチェック）
+    # print("[DEBUG] RAW BYTES:", list(raw), file=sys.stderr, flush=True)  # stderrにバイナリ吐く（壊れてるかチェック）
 
     try:
         decoded = raw.decode("utf-8")
-        print("🧪 DECODED:", decoded, file=sys.stderr, flush=True)
+        # print("[DEBUG] DECODED:", decoded, file=sys.stderr, flush=True)
     except UnicodeDecodeError as e:
-        print("🧪 DECODE ERROR:", e, file=sys.stderr, flush=True)
+        print("[DEBUG] DECODE ERROR:", e, file=sys.stderr, flush=True)
         raise
 
     import json
@@ -46,7 +49,7 @@ def main(args_dict):
         return {"status": "error", "message": f"Unknown mode: {mode}"}
 
 if __name__ == "__main__":
-    print("hello, world.", flush=True)
+    # デバッグ出力を削除
     try:
         args = parse_args_from_stdin() if not sys.stdin.isatty() else parse_args_from_cli()
     
@@ -59,9 +62,6 @@ if __name__ == "__main__":
         json_str = json.dumps(output, ensure_ascii=False, indent=2)
         print(json_str, flush=True)
 
-        # sys.stdout.buffer.write(json_str.encode("utf-8"))
-        # sys.stdout.buffer.write(b"\n")
-
     except Exception as e:
         tb_lines = traceback.format_exc().splitlines()
         error_output = {
@@ -71,11 +71,3 @@ if __name__ == "__main__":
         }
         json_str = json.dumps(error_output, ensure_ascii=False, indent=2)
         print(json_str, flush=True)
-
-        # sys.stdout.buffer.write(json_str.encode("utf-8"))
-        # sys.stdout.buffer.write(b"\n")
-        
-
-
-
-

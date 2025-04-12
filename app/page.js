@@ -12,6 +12,9 @@ export default function Page() {
   const [completed, setCompleted] = useState(false);
 
   useEffect(() => {
+    let isUnmounted = false;
+    let unlistenCallback = null;
+
     const startPython = async () => {
       const script = "main.py";
       const params = {
@@ -20,30 +23,51 @@ export default function Page() {
         plant_name: "工場B",
       };
 
-      // リスナーを登録（ログ受信）
-      const unlisten = await listen("python-log", (event) => {
-        const line = event.payload;
+      try {
+        // リスナーを登録（ログ受信）- マウント状態を確認
+        unlistenCallback = await listen("python-log", (event) => {
+          // コンポーネントがアンマウントされていたら何もしない
+          if (isUnmounted) return;
+          
+          const line = event.payload;
+          
+          // 重複を防ぐためのフィルタリング
+          // 同じ行が短時間に複数回来た場合は無視する
+          setLogLines((prev) => {
+            // 直近の行と同じ内容なら追加しない
+            if (prev.length > 0 && prev[prev.length - 1] === line) {
+              return prev;
+            }
+            return [...prev, line];
+          });
 
-        setLogLines((prev) => [...prev, line]);
+          // 任意：終了っぽいワードが来たらcompletedにする
+          if (line.includes("CSV処理完了") || line.includes("全処理完了")) {
+            setCompleted(true);
+          }
+        });
 
-        // 任意：終了っぽいワードが来たらcompletedにする
-        if (line.includes("CSV処理完了") || line.includes("全処理完了")) {
-          setCompleted(true);
+        // Pythonの実行スタート（streaming版）
+        if (!isUnmounted) {
+          await invoke("run_python_script_streaming", {
+            script,
+            param: JSON.stringify(params),
+          });
         }
-      });
-
-      // Pythonの実行スタート（streaming版）
-      await invoke("run_python_script_streaming", {
-        script,
-        param: JSON.stringify(params),
-      });
-
-      return () => {
-        unlisten();
-      };
+      } catch (error) {
+        console.error("Python実行エラー:", error);
+      }
     };
 
     startPython();
+
+    // クリーンアップ関数
+    return () => {
+      isUnmounted = true;
+      if (unlistenCallback) {
+        unlistenCallback();
+      }
+    };
   }, []);
 
   const handleUpdateCheck = async () => {
