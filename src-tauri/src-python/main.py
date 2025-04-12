@@ -43,7 +43,7 @@ def main(args_dict):
 if __name__ == "__main__":
     args = parse_args_from_stdin() if not sys.stdin.isatty() else parse_args_from_cli()
 
-    sys.stdout.buffer.write(json.dumps(args, ensure_ascii=False).encode("utf-8"))
+    sys.stdout.buffer.write(json.dumps(args, ensure_ascii=False, indent=2).encode("utf-8"))
     sys.stdout.buffer.write(b"\n")
 
     result = main(args)

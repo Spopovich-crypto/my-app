@@ -12,7 +12,9 @@ def run_csv_to_db(args):
         "processed_files": ["log1.csv", "log2.csv"],
         "row_count": 2480
     }
-    json_output = json.dumps(result, ensure_ascii=False) + "\n"
+    json_output = json.dumps(result, ensure_ascii=False, indent=2) + "\n"
 
     sys.stdout.buffer.write(json_output.encode("utf-8"))
+    sys.stdout.buffer.write(b"\n")
+
 
