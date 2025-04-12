@@ -15,6 +15,9 @@ fn run_python_script(script: String, param: String) -> Result<String, String> {
     use std::env;
     use std::io::Write;
     use std::process::{Command, Stdio};
+    use std::os::windows::process::CommandExt;
+
+    const CREATE_NO_WINDOW: u32 = 0x08000000; // コンソールウィンドウを表示しないフラグ
 
     let current_dir = env::current_dir().map_err(|e| e.to_string())?;
     println!("Current working directory: {:?}", current_dir);
@@ -26,6 +29,7 @@ fn run_python_script(script: String, param: String) -> Result<String, String> {
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
+        .creation_flags(CREATE_NO_WINDOW)
         .spawn()
         .map_err(|e| e.to_string())?;
 
