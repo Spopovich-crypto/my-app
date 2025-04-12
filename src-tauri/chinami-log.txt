@@ -1,0 +1,2 @@
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"
+Current working directory: "C:\\Users\\morim\\Documents\\My Scripts\\tauri-python-test\\my-app\\src-tauri"

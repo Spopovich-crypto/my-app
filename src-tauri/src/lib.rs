@@ -1,7 +1,31 @@
+// 🔽 ログをファイルに書き出す関数
+fn write_log(line: &str) {
+  use std::fs::OpenOptions;
+  use std::io::Write;
+  use std::path::PathBuf;
+
+  let log_path = PathBuf::from("chinami-log.txt"); // ← カレントディレクトリに出力
+  if let Ok(mut file) = OpenOptions::new()
+      .create(true)
+      .append(true)
+      .open(log_path)
+  {
+      let _ = writeln!(file, "{}", line);
+  }
+}
+
+
 #[tauri::command]
 fn run_python_script(script: String, param: String) -> Result<String, String> {
     use std::process::{Command, Stdio};
     use std::io::Write;
+    use std::env;
+
+
+    let current_dir = env::current_dir().map_err(|e| e.to_string())?;
+    println!("Current working directory: {:?}", current_dir);
+    write_log(&format!("Current working directory: {:?}", current_dir));
+
 
     let script_path = format!("src-python/{}", script); // ここで任意の.pyを指定
     let mut child = Command::new("python-embed/python.exe")
