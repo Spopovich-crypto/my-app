@@ -154,38 +154,6 @@ def find_csvs(folder: Path) -> List[Path]:
     return [p for p in folder.rglob("*.csv") if p.is_file()]
 </file>
 
-<file path="src-tauri/src-python/libs/csvutils/main.py">
-from .finder import find_csvs
-from .processor import process_csv
-
-import json
-import sys
-
-def run_csv_to_db(args):
-    for i in range(10):
-        print(f"{i}番目のCSVファイルを処理しています", flush=True)
-
-    return {
-        "message": "全CSV処理が完了しました"
-    }
-   
-    # # 仮の結果
-    # result = {
-    #     "status": "success",
-    #     "message": "CSV処理完了",
-    #     "processed_files": ["log1.csv", "log2.csv"],
-    #     "row_count": 2480
-    # }
-    # json_output = json.dumps(result, ensure_ascii=False, indent=2)
-    # sys.stdout.buffer.write(json_output.encode("utf-8"))
-    # sys.stdout.buffer.write(b"\n")
-</file>
-
-<file path="src-tauri/src-python/libs/csvutils/processor.py">
-def process_csv():
-    print("process_csv", flush=True)
-</file>
-
 <file path=".eslintrc.json">
 {
   "extends": "next/core-web-vitals"
@@ -1060,6 +1028,11 @@ the HTML Library software distribution is included in the file
 docs/license.html_lib.
 </file>
 
+<file path="src-tauri/src-python/libs/csvutils/processor.py">
+def process_csv():
+    print("process_csv", flush=True)
+</file>
+
 <file path="tailwind.config.js">
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -1115,6 +1088,44 @@ python311.zip
 # Uncomment to run site.main() automatically
 #import site
 Lib/site-packages
+</file>
+
+<file path="src-tauri/src-python/libs/csvutils/main.py">
+from .finder import find_csvs
+from .processor import process_csv
+
+import json
+import sys
+
+def run_csv_to_db(args):
+    # 標準出力のみに出力
+    print("CSVファイル処理を開始します", flush=True)
+    
+    # timeモジュールを一度だけインポート
+    import time
+    
+    for i in range(100):
+        # 標準出力のみに出力
+        print(f"{i}番目のCSVファイルを処理しています", flush=True)
+        # 処理間に少し待機を入れる（バッファリング問題の確認用）- 待機時間を短縮
+        time.sleep(0.05)
+    
+    print("全CSVファイルの処理が完了しました", flush=True)
+    
+    return {
+        "message": "全CSV処理が完了しました"
+    }
+   
+    # # 仮の結果
+    # result = {
+    #     "status": "success",
+    #     "message": "CSV処理完了",
+    #     "processed_files": ["log1.csv", "log2.csv"],
+    #     "row_count": 2480
+    # }
+    # json_output = json.dumps(result, ensure_ascii=False, indent=2)
+    # sys.stdout.buffer.write(json_output.encode("utf-8"))
+    # sys.stdout.buffer.write(b"\n")
 </file>
 
 <file path="src-tauri/src/main.rs">
@@ -1313,10 +1324,17 @@ chrono = "0.4"
 # 📄 src-python/main.py
 
 import sys
+import os
 import json
 import argparse
 from pathlib import Path
 import traceback
+
+# UTF-8エンコーディングを強制的に使用
+# バイナリモードではバッファリング=0（無効）を使用
+import io
+sys.stdout = io.TextIOWrapper(open(sys.stdout.fileno(), 'wb', buffering=0), encoding='utf-8', errors='backslashreplace')
+sys.stderr = io.TextIOWrapper(open(sys.stderr.fileno(), 'wb', buffering=0), encoding='utf-8', errors='backslashreplace')
 
 sys.path.append(str(Path(__file__).parent / "libs"))
 from csvutils.main import run_csv_to_db
@@ -1331,13 +1349,13 @@ def parse_args_from_cli():
 def parse_args_from_stdin():
     import sys
     raw = sys.stdin.buffer.read()
-    print("🧪 RAW BYTES:", list(raw), file=sys.stderr, flush=True)  # stderrにバイナリ吐く（壊れてるかチェック）
+    # print("[DEBUG] RAW BYTES:", list(raw), file=sys.stderr, flush=True)  # stderrにバイナリ吐く（壊れてるかチェック）
 
     try:
         decoded = raw.decode("utf-8")
-        print("🧪 DECODED:", decoded, file=sys.stderr, flush=True)
+        # print("[DEBUG] DECODED:", decoded, file=sys.stderr, flush=True)
     except UnicodeDecodeError as e:
-        print("🧪 DECODE ERROR:", e, file=sys.stderr, flush=True)
+        print("[DEBUG] DECODE ERROR:", e, file=sys.stderr, flush=True)
         raise
 
     import json
@@ -1354,7 +1372,7 @@ def main(args_dict):
         return {"status": "error", "message": f"Unknown mode: {mode}"}
 
 if __name__ == "__main__":
-    print("hello, world.", flush=True)
+    # デバッグ出力を削除
     try:
         args = parse_args_from_stdin() if not sys.stdin.isatty() else parse_args_from_cli()
     
@@ -1367,9 +1385,6 @@ if __name__ == "__main__":
         json_str = json.dumps(output, ensure_ascii=False, indent=2)
         print(json_str, flush=True)
 
-        # sys.stdout.buffer.write(json_str.encode("utf-8"))
-        # sys.stdout.buffer.write(b"\n")
-
     except Exception as e:
         tb_lines = traceback.format_exc().splitlines()
         error_output = {
@@ -1379,15 +1394,12 @@ if __name__ == "__main__":
         }
         json_str = json.dumps(error_output, ensure_ascii=False, indent=2)
         print(json_str, flush=True)
-
-        # sys.stdout.buffer.write(json_str.encode("utf-8"))
-        # sys.stdout.buffer.write(b"\n")
 </file>
 
 <file path="app/page.js">
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 import { checkForUpdate } from "./utils/checkForUpdate";
@@ -1397,8 +1409,57 @@ export default function Page() {
   const [updateMessage, setUpdateMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [completed, setCompleted] = useState(false);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const logContainerRef = useRef(null);
+
+  // ユーザーのスクロール操作を検知するイベントハンドラ
+  const handleScroll = () => {
+    if (!logContainerRef.current) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = logContainerRef.current;
+    // スクロール位置が最下部から20px以内なら自動スクロールを有効化
+    const isNearBottom = scrollHeight - scrollTop - clientHeight < 20;
+    
+    setShouldAutoScroll(isNearBottom);
+  };
+
+  // スクロールを最下部に移動する関数（useCallbackでメモ化）
+  const scrollToBottom = useCallback(() => {
+    if (logContainerRef.current && shouldAutoScroll) {
+      // 強制的にスクロールを実行
+      const container = logContainerRef.current;
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [shouldAutoScroll]);
+
+  // ログが更新されたときに強制的にスクロールを実行
+  useEffect(() => {
+    if (logLines.length > 0 && shouldAutoScroll) {
+      // 複数の方法を組み合わせて確実にスクロールを実行
+      // 1. 即時実行
+      scrollToBottom();
+      
+      // 2. 次のフレームで実行
+      requestAnimationFrame(scrollToBottom);
+      
+      // 3. 少し遅延させて実行（レンダリング完了後）
+      setTimeout(scrollToBottom, 50);
+    }
+  }, [logLines, scrollToBottom]);
+
+  // スクロールイベントリスナーの登録と解除
+  useEffect(() => {
+    const logContainer = logContainerRef.current;
+    if (logContainer) {
+      logContainer.addEventListener('scroll', handleScroll);
+      return () => logContainer.removeEventListener('scroll', handleScroll);
+    }
+  }, []);
 
   useEffect(() => {
+    let isUnmounted = false;
+    let unlistenCallback = null;
+
     const startPython = async () => {
       const script = "main.py";
       const params = {
@@ -1407,30 +1468,59 @@ export default function Page() {
         plant_name: "工場B",
       };
 
-      // リスナーを登録（ログ受信）
-      const unlisten = await listen("python-log", (event) => {
-        const line = event.payload;
+      try {
+        // リスナーを登録（ログ受信）- マウント状態を確認
+        unlistenCallback = await listen("python-log", (event) => {
+          // コンポーネントがアンマウントされていたら何もしない
+          if (isUnmounted) return;
+          
+          const line = event.payload;
+          
+          // 重複を防ぐためのフィルタリング
+          // 同じ行が短時間に複数回来た場合は無視する
+          setLogLines((prev) => {
+            // 直近の行と同じ内容なら追加しない
+            if (prev.length > 0 && prev[prev.length - 1] === line) {
+              return prev;
+            }
+            
+            // 新しいログを追加した後、次のフレームでスクロールを実行
+            requestAnimationFrame(() => {
+              if (logContainerRef.current && shouldAutoScroll) {
+                logContainerRef.current.scrollTop = logContainerRef.current.scrollHeight;
+              }
+            });
+            
+            return [...prev, line];
+          });
 
-        setLogLines((prev) => [...prev, line]);
+          // 任意：終了っぽいワードが来たらcompletedにする
+          if (line.includes("CSV処理完了") || line.includes("全処理完了")) {
+            setCompleted(true);
+          }
+        });
 
-        // 任意：終了っぽいワードが来たらcompletedにする
-        if (line.includes("CSV処理完了") || line.includes("全処理完了")) {
-          setCompleted(true);
+        // Pythonの実行スタート（streaming版）
+        if (!isUnmounted) {
+          await invoke("run_python_script_streaming", {
+            script,
+            param: JSON.stringify(params),
+          });
         }
-      });
-
-      // Pythonの実行スタート（streaming版）
-      await invoke("run_python_script_streaming", {
-        script,
-        param: JSON.stringify(params),
-      });
-
-      return () => {
-        unlisten();
-      };
+      } catch (error) {
+        console.error("Python実行エラー:", error);
+      }
     };
 
     startPython();
+
+    // クリーンアップ関数
+    return () => {
+      isUnmounted = true;
+      if (unlistenCallback) {
+        unlistenCallback();
+      }
+    };
   }, []);
 
   const handleUpdateCheck = async () => {
@@ -1444,7 +1534,12 @@ export default function Page() {
     <div className="p-4 space-y-4">
       <div>
         <h2 className="text-lg font-bold">Python 実行ログ</h2>
-        <pre className="mt-2 p-2 bg-gray-100 border rounded h-80 overflow-auto whitespace-pre-wrap">
+        <pre 
+          ref={logContainerRef}
+          className="mt-2 p-2 bg-gray-100 border rounded h-80 overflow-auto whitespace-pre-wrap"
+          style={{ scrollBehavior: 'smooth' }}
+          onScroll={handleScroll}
+        >
           {logLines.map((line, idx) => (
             <div key={idx}>{line}</div>
           ))}
@@ -1561,14 +1656,22 @@ fn run_python_script_streaming(window: tauri::Window, script: String, param: Str
     use std::process::{Command, Stdio};
     use std::os::windows::process::CommandExt;
     use encoding_rs::UTF_8;
+    use std::thread;
+    use std::sync::{Arc, Mutex};
+    use std::collections::HashSet;
 
     const CREATE_NO_WINDOW: u32 = 0x08000000;
+
+    write_log("INFO", &format!("Pythonスクリプト実行開始: {}", script));
+
+    // 既に送信したメッセージを追跡するためのセット（スレッド間で共有）
+    let sent_messages = Arc::new(Mutex::new(HashSet::<String>::new()));
 
     let mut child = Command::new("python-embed/python.exe")
         .arg(format!("src-python/{}", script))
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
-        .stderr(Stdio::inherit())
+        .stderr(Stdio::piped())
         .creation_flags(CREATE_NO_WINDOW)
         .spawn()
         .map_err(|e| format!("起動失敗: {}", e))?;
@@ -1580,21 +1683,99 @@ fn run_python_script_streaming(window: tauri::Window, script: String, param: Str
             .map_err(|e| format!("stdin書き込み失敗: {}", e))?;
     }
 
+    // 標準出力の処理
     let stdout = child.stdout.take().ok_or("stdout取得失敗")?;
-    let reader = BufReader::new(stdout);
-
-    for line in reader.lines() {
-        match line {
-            Ok(l) => {
-                window.emit("python-log", l).unwrap_or_else(|err| {
-                    println!("emit失敗: {:?}", err);
-                });
-            }
-            Err(e) => {
-                return Err(format!("出力読み込み失敗: {}", e));
+    let stdout_reader = BufReader::new(stdout);
+    let window_clone = window.clone();
+    let sent_messages_clone = Arc::clone(&sent_messages);
+    
+    thread::spawn(move || {
+        for line in stdout_reader.lines() {
+            match line {
+                Ok(l) => {
+                    // ログファイルには常に記録
+                    write_log("STDOUT", &l);
+                    
+                    // 重複チェック - 既に送信済みのメッセージは送信しない
+                    let mut sent_set = sent_messages_clone.lock().unwrap();
+                    if !sent_set.contains(&l) {
+                        // JSONデータの場合は特別処理
+                        if l.trim().starts_with("{") && l.trim().ends_with("}") {
+                            // JSONデータは一度だけ送信
+                            window_clone.emit("python-log", &l).unwrap_or_else(|err| {
+                                println!("stdout JSON emit失敗: {:?}", err);
+                            });
+                        } else {
+                            // 通常のログメッセージ
+                            window_clone.emit("python-log", &l).unwrap_or_else(|err| {
+                                println!("stdout emit失敗: {:?}", err);
+                            });
+                        }
+                        
+                        // 送信済みとしてマーク
+                        sent_set.insert(l);
+                    }
+                }
+                Err(e) => {
+                    write_log("ERROR", &format!("stdout読み込み失敗: {}", e));
+                }
             }
         }
+    });
+
+    // 標準エラー出力の処理 - 実際のエラーのみを送信
+    if let Some(stderr) = child.stderr.take() {
+        let stderr_reader = BufReader::new(stderr);
+        let window_clone = window.clone();
+        let sent_messages_clone = Arc::clone(&sent_messages);
+        
+        thread::spawn(move || {
+            for line in stderr_reader.lines() {
+                match line {
+                    Ok(l) => {
+                        // ログファイルには常に記録
+                        write_log("STDERR", &l);
+                        
+                        // 重要なエラーメッセージのみをフロントエンドに送信
+                        if !l.is_empty() && !l.contains("全CSVファイルの処理が完了しました") {
+                            let mut sent_set = sent_messages_clone.lock().unwrap();
+                            let error_msg = format!("[ERROR] {}", l);
+                            
+                            // 重複チェック - 既に送信済みのメッセージは送信しない
+                            if !sent_set.contains(&error_msg) {
+                                window_clone.emit("python-log", &error_msg).unwrap_or_else(|err| {
+                                    println!("stderr emit失敗: {:?}", err);
+                                });
+                                
+                                // 送信済みとしてマーク
+                                sent_set.insert(error_msg);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        write_log("ERROR", &format!("stderr読み込み失敗: {}", e));
+                    }
+                }
+            }
+        });
     }
+
+    // 子プロセスの終了を待つスレッド
+    let window_clone = window.clone();
+    thread::spawn(move || {
+        match child.wait() {
+            Ok(status) => {
+                let msg = format!("Pythonプロセス終了: {}", status);
+                write_log("INFO", &msg);
+                window_clone.emit("python-log", format!("[INFO] {}", msg)).unwrap_or_default();
+            }
+            Err(e) => {
+                let msg = format!("Pythonプロセス待機エラー: {}", e);
+                write_log("ERROR", &msg);
+                window_clone.emit("python-log", format!("[ERROR] {}", msg)).unwrap_or_default();
+            }
+        }
+    });
 
     Ok(())
 }

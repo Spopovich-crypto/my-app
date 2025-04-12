@@ -1,16 +1,31 @@
 use chrono::Local;
 use tauri::Emitter;
 
-// 🔽 ログをファイルに書き出す関数
+// 🔽 ログをファイルに書き出す関数（日付ごとにファイルを分ける）
 fn write_log(level: &str, message: &str) {
     use std::fs::OpenOptions;
     use std::io::Write;
     use std::path::PathBuf;
 
-    let log_path = PathBuf::from("chinami-log.txt");
+    let now = Local::now();
+    let date_str = now.format("%Y-%m-%d");
+    let time_str = now.format("%H:%M:%S");
+    
+    let log_path = PathBuf::from(format!("chinami-log-{}.txt", date_str));
     if let Ok(mut file) = OpenOptions::new().create(true).append(true).open(log_path) {
-        let timestamp = Local::now().format("%Y-%m-%d %H:%M:%S");
-        let _ = writeln!(file, "[{}] [{}] {}", timestamp, level, message);
+        let _ = writeln!(file, "[{}] [{}] {}", time_str, level, message);
+    }
+}
+
+// フロントエンドへのイベント送信を安全に行う関数
+async fn safe_emit<T: serde::Serialize>(
+    window: &tauri::Window,
+    event: &str,
+    payload: T,
+    task_name: &str
+) {
+    if let Err(err) = window.emit(event, &payload) {
+        write_log("ERROR", &format!("[{}] emit失敗: {:?}", task_name, err));
     }
 }
 
@@ -83,20 +98,21 @@ fn run_python_script(script: String, param: String) -> Result<String, String> {
 }
 
 #[tauri::command]
-fn run_python_script_streaming(window: tauri::Window, script: String, param: String) -> Result<(), String> {
-    use std::io::{BufRead, BufReader, Write};
-    use std::process::{Command, Stdio};
-    use std::os::windows::process::CommandExt;
+async fn run_python_script_streaming(window: tauri::Window, script: String, param: String) -> Result<(), String> {
+    use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+    use tokio::process::Command;
+    use std::process::Stdio;
     use encoding_rs::UTF_8;
-    use std::thread;
-    use std::sync::{Arc, Mutex};
+    use tokio::task;
+    use tokio::sync::Mutex;
+    use std::sync::Arc;
     use std::collections::HashSet;
 
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-    write_log("INFO", &format!("Pythonスクリプト実行開始: {}", script));
+    write_log("INFO", &format!("[main-task] Pythonスクリプト実行開始: {}", script));
 
-    // 既に送信したメッセージを追跡するためのセット（スレッド間で共有）
+    // 既に送信したメッセージを追跡するためのセット（タスク間で共有）
     let sent_messages = Arc::new(Mutex::new(HashSet::<String>::new()));
 
     let mut child = Command::new("python-embed/python.exe")
@@ -108,10 +124,11 @@ fn run_python_script_streaming(window: tauri::Window, script: String, param: Str
         .spawn()
         .map_err(|e| format!("起動失敗: {}", e))?;
 
-    if let Some(stdin) = &mut child.stdin {
+    if let Some(stdin) = child.stdin.as_mut() {
         let (encoded_param, _, _) = UTF_8.encode(&param);
         stdin
             .write_all(&encoded_param)
+            .await
             .map_err(|e| format!("stdin書き込み失敗: {}", e))?;
     }
 
@@ -121,93 +138,97 @@ fn run_python_script_streaming(window: tauri::Window, script: String, param: Str
     let window_clone = window.clone();
     let sent_messages_clone = Arc::clone(&sent_messages);
     
-    thread::spawn(move || {
-        for line in stdout_reader.lines() {
-            match line {
-                Ok(l) => {
-                    // ログファイルには常に記録
-                    write_log("STDOUT", &l);
-                    
-                    // 重複チェック - 既に送信済みのメッセージは送信しない
-                    let mut sent_set = sent_messages_clone.lock().unwrap();
-                    if !sent_set.contains(&l) {
-                        // JSONデータの場合は特別処理
-                        if l.trim().starts_with("{") && l.trim().ends_with("}") {
-                            // JSONデータは一度だけ送信
-                            window_clone.emit("python-log", &l).unwrap_or_else(|err| {
-                                println!("stdout JSON emit失敗: {:?}", err);
-                            });
-                        } else {
-                            // 通常のログメッセージ
-                            window_clone.emit("python-log", &l).unwrap_or_else(|err| {
-                                println!("stdout emit失敗: {:?}", err);
-                            });
-                        }
-                        
-                        // 送信済みとしてマーク
-                        sent_set.insert(l);
-                    }
+    let stdout_task = task::spawn(async move {
+        let mut lines = stdout_reader.lines();
+        
+        while let Some(line) = lines.next_line().await.unwrap_or(None) {
+            // ログファイルには常に記録
+            write_log("STDOUT", &format!("[stdout-task] {}", line));
+            
+            // 重複チェック - 既に送信済みのメッセージは送信しない
+            let mut sent_set = sent_messages_clone.lock().await;
+            if !sent_set.contains(&line) {
+                // JSONデータの場合は特別処理
+                if serde_json::from_str::<serde_json::Value>(&line).is_ok() {
+                    // JSONデータは専用イベントで送信
+                    safe_emit(&window_clone, "python-json", &line, "stdout-task").await;
+                } else {
+                    // 通常のログメッセージ
+                    safe_emit(&window_clone, "python-log", &line, "stdout-task").await;
                 }
-                Err(e) => {
-                    write_log("ERROR", &format!("stdout読み込み失敗: {}", e));
-                }
+                
+                // 送信済みとしてマーク
+                sent_set.insert(line);
             }
         }
     });
 
     // 標準エラー出力の処理 - 実際のエラーのみを送信
-    if let Some(stderr) = child.stderr.take() {
+    let stderr_task = if let Some(stderr) = child.stderr.take() {
         let stderr_reader = BufReader::new(stderr);
         let window_clone = window.clone();
         let sent_messages_clone = Arc::clone(&sent_messages);
         
-        thread::spawn(move || {
-            for line in stderr_reader.lines() {
-                match line {
-                    Ok(l) => {
-                        // ログファイルには常に記録
-                        write_log("STDERR", &l);
-                        
-                        // 重要なエラーメッセージのみをフロントエンドに送信
-                        if !l.is_empty() && !l.contains("全CSVファイルの処理が完了しました") {
-                            let mut sent_set = sent_messages_clone.lock().unwrap();
-                            let error_msg = format!("[ERROR] {}", l);
-                            
-                            // 重複チェック - 既に送信済みのメッセージは送信しない
-                            if !sent_set.contains(&error_msg) {
-                                window_clone.emit("python-log", &error_msg).unwrap_or_else(|err| {
-                                    println!("stderr emit失敗: {:?}", err);
-                                });
-                                
-                                // 送信済みとしてマーク
-                                sent_set.insert(error_msg);
-                            }
+        Some(task::spawn(async move {
+            let mut lines = stderr_reader.lines();
+            
+            while let Some(line) = lines.next_line().await.unwrap_or(None) {
+                // ログファイルには常に記録
+                write_log("STDERR", &format!("[stderr-task] {}", line));
+                
+                // 重要なエラーメッセージのみをフロントエンドに送信
+                if !line.is_empty() && !line.contains("全CSVファイルの処理が完了しました") {
+                    let mut sent_set = sent_messages_clone.lock().await;
+                    
+                    // JSONエラーの場合は特別処理
+                    if serde_json::from_str::<serde_json::Value>(&line).is_ok() {
+                        // JSONエラーデータは専用イベントで送信
+                        if !sent_set.contains(&line) {
+                            safe_emit(&window_clone, "python-json-error", &line, "stderr-task").await;
+                            sent_set.insert(line);
                         }
-                    }
-                    Err(e) => {
-                        write_log("ERROR", &format!("stderr読み込み失敗: {}", e));
+                    } else {
+                        // 通常のエラーメッセージ
+                        let error_msg = format!("[ERROR] {}", line);
+                        
+                        // 重複チェック - 既に送信済みのメッセージは送信しない
+                        if !sent_set.contains(&error_msg) {
+                            safe_emit(&window_clone, "python-log", &error_msg, "stderr-task").await;
+                            sent_set.insert(error_msg);
+                        }
                     }
                 }
             }
-        });
-    }
+        }))
+    } else {
+        None
+    };
 
-    // 子プロセスの終了を待つスレッド
+    // 子プロセスの終了を待つタスク
     let window_clone = window.clone();
-    thread::spawn(move || {
-        match child.wait() {
+    let wait_task = task::spawn(async move {
+        match child.wait().await {
             Ok(status) => {
                 let msg = format!("Pythonプロセス終了: {}", status);
-                write_log("INFO", &msg);
-                window_clone.emit("python-log", format!("[INFO] {}", msg)).unwrap_or_default();
+                write_log("INFO", &format!("[wait-task] {}", msg));
+                safe_emit(&window_clone, "python-log", format!("[INFO] {}", msg), "wait-task").await;
             }
             Err(e) => {
                 let msg = format!("Pythonプロセス待機エラー: {}", e);
-                write_log("ERROR", &msg);
-                window_clone.emit("python-log", format!("[ERROR] {}", msg)).unwrap_or_default();
+                write_log("ERROR", &format!("[wait-task] {}", msg));
+                safe_emit(&window_clone, "python-log", format!("[ERROR] {}", msg), "wait-task").await;
             }
         }
     });
+
+    // 全てのタスクが完了するまで待機
+    if let Some(stderr_task) = stderr_task {
+        tokio::try_join!(stdout_task, stderr_task, wait_task)
+            .map_err(|e| format!("タスク実行エラー: {}", e))?;
+    } else {
+        tokio::try_join!(stdout_task, wait_task)
+            .map_err(|e| format!("タスク実行エラー: {}", e))?;
+    }
 
     Ok(())
 }
