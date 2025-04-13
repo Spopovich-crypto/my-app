@@ -1,7 +1,7 @@
 // hooks/usePythonStreaming.js
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -16,16 +16,22 @@ import { invoke } from "@tauri-apps/api/core";
 const usePythonStreaming = (trigger, script, params) => {
   const [logLines, setLogLines] = useState([]);
   const [completed, setCompleted] = useState(false);
+  // 各実行ごとに一意となる識別子を保持するためのref
+  const runIdRef = useRef(null);
 
   useEffect(() => {
-    if (!trigger) return; // triggerが falsy の場合は何もしない
+    if (!trigger) return; // trigger が falsy の場合は何もしない
 
-    // 再実行時にログをクリアし、完了状態をリセット
+    // 今回の実行に対してユニークな runId を生成（例：タイムスタンプと trigger を組み合わせ）
+    runIdRef.current = `${Date.now()}-${trigger}`;
+
+    // 再実行時にログと完了状態をリセット
     setLogLines([]);
     setCompleted(false);
 
     let isUnmounted = false;
     let unlistenCallback = null;
+    const currentRunId = runIdRef.current; // 現在の実行識別子をキャプチャ
 
     const startPython = async () => {
       try {
@@ -50,8 +56,11 @@ const usePythonStreaming = (trigger, script, params) => {
             return [...prev, log];
           });
 
-          // 終了判定（例：ログに "Pythonプロセス終了" が含まれる場合）
-          if (log.message.includes("Pythonプロセス終了")) {
+          // 「Pythonプロセス終了」のログを受信し、現在の実行に一致していれば完了と判定
+          if (
+            log.message.includes("Pythonプロセス終了") &&
+            runIdRef.current === currentRunId
+          ) {
             setCompleted(true);
           }
         });

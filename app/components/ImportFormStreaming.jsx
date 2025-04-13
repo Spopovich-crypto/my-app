@@ -61,10 +61,13 @@ export default function ImportFormStreaming() {
   // 実行中かどうかのフラグ（処理が開始され、かつ完了していない場合）
   const isProcessing = trigger > 0 && !completed;
 
-  // 完了時に snackbar を表示する useEffect
+  // 完了時の snackbar 表示に 300ms のディレイを導入
   useEffect(() => {
     if (completed && trigger > 0) {
-      setSnackbar({ open: true, message: "✅ 処理が完了しました！", severity: "success" });
+      const timeoutId = setTimeout(() => {
+        setSnackbar({ open: true, message: "✅ 処理が完了しました！", severity: "success" });
+      }, 300);
+      return () => clearTimeout(timeoutId);
     }
   }, [completed, trigger]);
 
@@ -116,8 +119,7 @@ export default function ImportFormStreaming() {
     setEvents(newEvents);
   };
 
-  // フォーム送信時の処理
-  // 入力のバリデーション後、payload を生成し、streamParams と trigger を更新
+  // フォーム送信時の処理：入力バリデーション後、payloadを生成し、streamParams と trigger を更新
   const handleSubmit = async () => {
     if (!targetFolder || !plantCode || !machineCode || !labelTitle) {
       setSnackbar({ open: true, message: "基本設定の必須項目をすべて入力してください。", severity: "warning" });
@@ -321,19 +323,19 @@ export default function ImportFormStreaming() {
                 <TextField label="DB出力パス" fullWidth value={dbPath} disabled />
               </Box>
             )}
-                    {/* ストリーミング実行結果の表示 */}
-        {trigger > 0 && (
-          <Box mt={4}>
-            <Typography variant="h6" gutterBottom>
-              実行ログ
-            </Typography>
-            <LogViewer>
-              {logLines.map((log, idx) => (
-                <LogLine key={idx} log={log} />
-              ))}
-            </LogViewer>
-          </Box>
-        )}
+            {/* ストリーミング実行結果の表示 */}
+            {trigger > 0 && (
+              <Box mt={4}>
+                <Typography variant="h6" gutterBottom>
+                  実行ログ
+                </Typography>
+                <LogViewer>
+                  {logLines.map((log, idx) => (
+                    <LogLine key={idx} log={log} />
+                  ))}
+                </LogViewer>
+              </Box>
+            )}
           </Box>
         </Collapse>
 
@@ -347,8 +349,6 @@ export default function ImportFormStreaming() {
             {snackbar.message}
           </Alert>
         </Snackbar>
-
-
       </Container>
     </LocalizationProvider>
   );
