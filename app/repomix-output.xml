@@ -1,0 +1,453 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+<additional_info>
+
+</additional_info>
+
+</file_summary>
+
+<directory_structure>
+components/CheckUpdate.jsx
+components/LogLine.jsx
+components/LogViewer.jsx
+components/RunStreamingPython.jsx
+globals.css
+hooks/usePythonStreaming.js
+layout.js
+page.js
+utils/checkForUpdate.js
+utils/invokePython.js
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="components/CheckUpdate.jsx">
+"use client";
+
+import { useState } from "react";
+import { checkForUpdate } from "../utils/checkForUpdate";
+
+
+export default function CheckUpdate() {
+  const [updateMessage, setUpdateMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleUpdateCheck = async () => {
+    setLoading(true);
+    const msg = await checkForUpdate();
+    setUpdateMessage(msg);
+    setLoading(false);
+  };
+
+  return (
+ 
+      <div className="p-4 border rounded">
+        <h2 className="text-lg font-bold mb-2">アップデート確認</h2>
+        <button
+          onClick={handleUpdateCheck}
+          disabled={loading}
+          className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:bg-gray-400"
+        >
+          {loading ? "確認中..." : "アップデートを確認する"}
+        </button>
+        {updateMessage && <p className="mt-4">{updateMessage}</p>}
+      </div>
+  );
+}
+</file>
+
+<file path="components/LogLine.jsx">
+// components/LogLine.jsx
+"use client";
+
+const LogLine = ({ log }) => {
+  let color = "text-gray-700";
+  let icon = "📝";
+
+  switch (log.level.toUpperCase()) {
+    case "INFO":
+      color = "text-blue-600";
+      icon = "ℹ️";
+      break;
+    case "ERROR":
+      color = "text-red-600 font-bold";
+      icon = "❌";
+      break;
+    case "WARN":
+    case "WARNING":
+      color = "text-yellow-600";
+      icon = "⚠️";
+      break;
+    case "DEBUG":
+      color = "text-purple-600";
+      icon = "🐛";
+      break;
+    default:
+      icon = "🧾";
+      break;
+  }
+
+  return (
+    <div className={`mb-1 ${color} font-mono text-sm`}>
+      <span className="mr-2">{icon}</span>
+      <span className="opacity-70">[{log.source}]</span>{" "}
+      <span>{log.message}</span>
+    </div>
+  );
+};
+
+export default LogLine;
+</file>
+
+<file path="components/LogViewer.jsx">
+// components/LogViewer.jsx
+"use client";
+
+import { useLayoutEffect, useEffect, useState, useRef } from "react";
+
+const LogViewer = ({ children }) => {
+  const containerRef = useRef(null);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+
+  const handleScroll = () => {
+    if (!containerRef.current) return;
+    const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
+    setShouldAutoScroll(scrollHeight - scrollTop - clientHeight < 50); // 閾値を50pxに調整
+  };
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener("scroll", handleScroll);
+      return () => container.removeEventListener("scroll", handleScroll);
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (containerRef.current && shouldAutoScroll) {
+      setTimeout(() => {
+        containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      }, 0);
+    }
+  }, [children, shouldAutoScroll]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="mt-2 p-2 bg-gray-100 border rounded h-80 overflow-auto whitespace-pre-wrap font-mono text-sm"
+    >
+      {children}
+    </div>
+  );
+};
+
+export default LogViewer;
+</file>
+
+<file path="components/RunStreamingPython.jsx">
+// components/RunStreamingPython.jsx
+"use client";
+
+import React from "react";
+import usePythonStreaming from "../hooks/usePythonStreaming";
+import LogViewer from "../components/LogViewer";
+import LogLine from "../components/LogLine";
+
+const script = "main.py";
+const params = {
+  mode: "csv",
+  folder: "./data",
+  plant_name: "工場B",
+};
+
+
+export default function RunStreamingPython() {
+  const { logLines, completed } = usePythonStreaming(script, params);
+  
+
+  return (
+    <div>
+      <h2 className="text-lg font-bold">実行ログ</h2>
+      <LogViewer>
+        {logLines.map((log, idx) => (
+          <LogLine key={idx} log={log} />
+        ))}
+      </LogViewer>
+      {completed && (
+        <p className="text-green-600 mt-2 font-medium">
+          ✅ 処理が完了しました！
+        </p>
+      )}
+    </div>
+  );
+}
+</file>
+
+<file path="globals.css">
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+</file>
+
+<file path="hooks/usePythonStreaming.js">
+// hooks/usePythonStreaming.js
+"use client";
+
+import { useEffect, useState } from "react";
+import { listen } from "@tauri-apps/api/event";
+import { invoke } from "@tauri-apps/api/core";
+
+
+
+
+const usePythonStreaming = (script, params) => {
+  const [logLines, setLogLines] = useState([]);
+  const [completed, setCompleted] = useState(false);
+
+  useEffect(() => {
+    let isUnmounted = false;
+    let unlistenCallback = null;
+
+    const startPython = async () => {
+ 
+      try {
+        unlistenCallback = await listen("python-log", (event) => {
+          if (isUnmounted) return;
+
+          const log = event.payload;
+
+          // ログの構造を検証
+          if (
+            typeof log !== "object" ||
+            !("message" in log && "level" in log && "source" in log)
+          ) {
+            console.warn("受信ログが構造化されていません:", log);
+            return;
+          }
+
+          setLogLines((prev) => {
+            // 連続する重複ログの排除
+            if (prev.length > 0 && prev[prev.length - 1].message === log.message) {
+              return prev;
+            }
+            return [...prev, log];
+          });
+
+        //   console.log(log);
+          // 終了条件の判定
+          if (
+            log.message.includes("Pythonプロセス終了")
+          ) {
+            setCompleted(true);
+          }
+        });
+
+        if (!isUnmounted) {
+          await invoke("run_python_script_streaming", {
+            script,
+            param: JSON.stringify(params),
+          });
+        }
+      } catch (error) {
+        console.error("Python実行エラー:", error);
+      }
+    };
+
+    startPython();
+
+    return () => {
+      isUnmounted = true;
+      if (unlistenCallback) {
+        unlistenCallback();
+      }
+    };
+  }, []);
+
+  return { logLines, completed };
+};
+
+export default usePythonStreaming;
+</file>
+
+<file path="layout.js">
+import localFont from "next/font/local";
+import "./globals.css";
+
+const geistSans = localFont({
+  src: "./fonts/GeistVF.woff",
+  variable: "--font-geist-sans",
+  weight: "100 900",
+});
+const geistMono = localFont({
+  src: "./fonts/GeistMonoVF.woff",
+  variable: "--font-geist-mono",
+  weight: "100 900",
+});
+
+export const metadata = {
+  title: "Create Next App",
+  description: "Generated by create next app",
+};
+
+export default function RootLayout({ children }) {
+  return (
+    <html lang="en">
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        {children}
+      </body>
+    </html>
+  );
+}
+</file>
+
+<file path="page.js">
+"use client";
+
+
+import RunStreamingPython from "./components/RunStreamingPython";
+import CheckUpdate from "./components/CheckUpdate";
+
+export default function Page() {
+
+
+  return (
+    <div className="p-4 space-y-6">
+ 
+      <RunStreamingPython />
+      <CheckUpdate/>
+
+    </div>
+  );
+}
+</file>
+
+<file path="utils/checkForUpdate.js">
+// 📁 frontend/utils/checkForUpdate.js
+import { check } from "@tauri-apps/plugin-updater";
+import { relaunch } from "@tauri-apps/plugin-process";
+
+/**
+ * アップデート確認＆実行関数（Tauri Plugin Updater 対応）
+ */
+export async function checkForUpdate() {
+  try {
+    const update = await check();
+    if (update) {
+      let downloaded = 0;
+      let contentLength = 0;
+
+      await update.downloadAndInstall((event) => {
+        switch (event.event) {
+          case "Started":
+            contentLength = event.data.contentLength;
+            console.log(`🔽 ダウンロード開始: ${contentLength} bytes`);
+            break;
+          case "Progress":
+            downloaded += event.data.chunkLength;
+            console.log(`📦 ${downloaded} / ${contentLength} bytes`);
+            break;
+          case "Finished":
+            console.log("✅ ダウンロード完了");
+            break;
+        }
+      });
+
+      console.log("🚀 アップデート完了、再起動します");
+      await relaunch();
+      return `アップデートを適用して再起動しました（v${update.version}）`;
+    } else {
+      return "✅ 最新バージョンです。";
+    }
+  } catch (err) {
+    return `アップデート確認エラー: ${String(err)}`;
+  }
+}
+</file>
+
+<file path="utils/invokePython.js">
+// 📁 frontend/utils/invokePython.js
+import { invoke } from "@tauri-apps/api/core";
+
+/**
+ * PythonスクリプトをTauri経由で実行する共通関数
+ * @param {string} script - Pythonファイル名（例: "main.py"）
+ * @param {Object} params - Pythonに渡す引数オブジェクト
+ * @returns {Promise<string>} Pythonスクリプトからの文字列出力 or エラー文字列
+ */
+export async function runPythonScript(script, param) {
+  try {
+    const result = await invoke("run_python_script", {
+      script,
+      param: JSON.stringify(param),
+    });
+    return String(result);
+  } catch (error) {
+    return `Python実行エラー: ${String(error)}`;
+  }
+}
+</file>
+
+</files>

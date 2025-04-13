@@ -47,5 +47,6 @@
       "dialog": true,
       "windows": {"installMode": "passive"}
       }
+      
     }
 }

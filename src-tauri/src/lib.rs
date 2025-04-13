@@ -1,9 +1,9 @@
 use chrono::Local;
-use tauri::Emitter;
-use std::sync::Arc;
-use tokio::sync::Mutex;
-use std::collections::HashSet;
 use serde::Serialize;
+use std::collections::HashSet;
+use std::sync::Arc;
+use tauri::Emitter;
+use tokio::sync::Mutex;
 
 #[derive(Serialize)]
 struct LogPayload {
@@ -46,15 +46,13 @@ async fn safe_emit(
     }
 }
 
-
-
 #[tauri::command]
 fn run_python_script(script: String, param: String) -> Result<String, String> {
     // use std::env;
-    use std::io::Write;
-    use std::process::{Command, Stdio};
-    use std::os::windows::process::CommandExt;
     use encoding_rs::UTF_8;
+    use std::io::Write;
+    use std::os::windows::process::CommandExt;
+    use std::process::{Command, Stdio};
 
     const CREATE_NO_WINDOW: u32 = 0x08000000; // コンソールウィンドウを表示しないフラグ
 
@@ -77,9 +75,7 @@ fn run_python_script(script: String, param: String) -> Result<String, String> {
 
     if let Some(stdin) = &mut child.stdin {
         let (encoded_param, _, _) = UTF_8.encode(&param); // ← ちゃんとUTF-8で強制エンコード
-        stdin
-            .write_all(&encoded_param)
-            .map_err(|e| e.to_string())?;
+        stdin.write_all(&encoded_param).map_err(|e| e.to_string())?;
     }
 
     let output = child.wait_with_output().map_err(|e| e.to_string())?;
@@ -87,15 +83,14 @@ fn run_python_script(script: String, param: String) -> Result<String, String> {
     // write_log(&format!("STDOUT RAW: {:?}", output.stdout));
     // write_log(&format!("STDERR RAW: {:?}", output.stderr));
 
-    let stdout_str = String::from_utf8(output.stdout)
-        .map_err(|e| {
-            write_log("ERROR", &format!("STDOUT decode error: {:?}", e));
-            format!("出力のデコードに失敗しました（UTF-8じゃない可能性）")
-        })?;
+    let stdout_str = String::from_utf8(output.stdout).map_err(|e| {
+        write_log("ERROR", &format!("STDOUT decode error: {:?}", e));
+        format!("出力のデコードに失敗しました（UTF-8じゃない可能性）")
+    })?;
 
     let stderr_str = String::from_utf8(output.stderr)
         .unwrap_or_else(|e| format!("Could not decode stderr: {:?}", e));
-        
+
     write_log("INFO", &format!("PYTHON OUTPUT: {}", stdout_str));
 
     // write_log(&format!("STDOUT TEXT: {}", stdout_str));
@@ -109,7 +104,7 @@ fn run_python_script(script: String, param: String) -> Result<String, String> {
                 return Err(stdout_str);
             }
         }
-    
+
         Ok(stdout_str)
     } else {
         Err(stderr_str)
@@ -117,16 +112,23 @@ fn run_python_script(script: String, param: String) -> Result<String, String> {
 }
 
 #[tauri::command]
-async fn run_python_script_streaming(window: tauri::Window, script: String, param: String) -> Result<(), String> {
+async fn run_python_script_streaming(
+    window: tauri::Window,
+    script: String,
+    param: String,
+) -> Result<(), String> {
+    use encoding_rs::UTF_8;
+    use std::process::Stdio;
     use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
     use tokio::process::Command;
-    use std::process::Stdio;
-    use encoding_rs::UTF_8;
     use tokio::task;
 
     const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-    write_log("INFO", &format!("[main-task] Pythonスクリプト実行開始: {}", script));
+    write_log(
+        "INFO",
+        &format!("[main-task] Pythonスクリプト実行開始: {}", script),
+    );
 
     let sent_messages = Arc::new(Mutex::new(HashSet::<String>::new()));
 
@@ -178,17 +180,32 @@ async fn run_python_script_streaming(window: tauri::Window, script: String, para
             let mut lines = stderr_reader.lines();
             while let Some(line) = lines.next_line().await.unwrap_or(None) {
                 write_log("STDERR", &format!("[stderr-task] {}", line));
-                if !line.is_empty() && !line.contains("全CSVファイルの処理が完了しました") {
+                if !line.is_empty() && !line.contains("全CSVファイルの処理が完了しました")
+                {
                     let mut sent_set = sent_messages_clone.lock().await;
                     if serde_json::from_str::<serde_json::Value>(&line).is_ok() {
                         if !sent_set.contains(&line) {
-                            safe_emit(&window_clone, "python-json-error", line.clone(), "ERROR", "stderr-task").await;
+                            safe_emit(
+                                &window_clone,
+                                "python-json-error",
+                                line.clone(),
+                                "ERROR",
+                                "stderr-task",
+                            )
+                            .await;
                             sent_set.insert(line);
                         }
                     } else {
                         let error_msg = format!("[ERROR] {}", line);
                         if !sent_set.contains(&error_msg) {
-                            safe_emit(&window_clone, "python-log", error_msg.clone(), "ERROR", "stderr-task").await;
+                            safe_emit(
+                                &window_clone,
+                                "python-log",
+                                error_msg.clone(),
+                                "ERROR",
+                                "stderr-task",
+                            )
+                            .await;
                             sent_set.insert(error_msg);
                         }
                     }
@@ -205,12 +222,26 @@ async fn run_python_script_streaming(window: tauri::Window, script: String, para
             Ok(status) => {
                 let msg = format!("Pythonプロセス終了: {}", status);
                 write_log("INFO", &format!("[wait-task] {}", msg));
-                safe_emit(&window_clone, "python-log", format!("[INFO] {}", msg), "INFO", "wait-task").await;
+                safe_emit(
+                    &window_clone,
+                    "python-log",
+                    format!("[INFO] {}", msg),
+                    "INFO",
+                    "wait-task",
+                )
+                .await;
             }
             Err(e) => {
                 let msg = format!("Pythonプロセス待機エラー: {}", e);
                 write_log("ERROR", &format!("[wait-task] {}", msg));
-                safe_emit(&window_clone, "python-log", format!("[ERROR] {}", msg), "ERROR", "wait-task").await;
+                safe_emit(
+                    &window_clone,
+                    "python-log",
+                    format!("[ERROR] {}", msg),
+                    "ERROR",
+                    "wait-task",
+                )
+                .await;
             }
         }
     });
@@ -219,8 +250,7 @@ async fn run_python_script_streaming(window: tauri::Window, script: String, para
         tokio::try_join!(stdout_task, stderr_task, wait_task)
             .map_err(|e| format!("タスク実行エラー: {}", e))?;
     } else {
-        tokio::try_join!(stdout_task, wait_task)
-            .map_err(|e| format!("タスク実行エラー: {}", e))?;
+        tokio::try_join!(stdout_task, wait_task).map_err(|e| format!("タスク実行エラー: {}", e))?;
     }
 
     Ok(())
@@ -229,6 +259,7 @@ async fn run_python_script_streaming(window: tauri::Window, script: String, para
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             if cfg!(debug_assertions) {
@@ -241,8 +272,9 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            run_python_script, 
-            run_python_script_streaming])
+            run_python_script,
+            run_python_script_streaming
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
