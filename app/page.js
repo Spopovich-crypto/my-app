@@ -2,6 +2,7 @@
 import ImportFormStreaming from "./components/ImportFormStreaming";
 import UpdateBadge from "./components/UpdateBadge";
 import AutoUpdateBadge from "./components/AutoUpdateBadge";
+import UpdateNotification from "./components/UpdateNotification";
 
 export default function Page() {
 
@@ -12,6 +13,7 @@ export default function Page() {
       <ImportFormStreaming />
       <UpdateBadge />
       <AutoUpdateBadge />
+      <UpdateNotification />
 
     </div>
   );
