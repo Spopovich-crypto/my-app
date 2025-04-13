@@ -15,6 +15,7 @@ sys.stderr = io.TextIOWrapper(open(sys.stderr.fileno(), 'wb', buffering=0), enco
 
 sys.path.append(str(Path(__file__).parent / "libs"))
 from csvutils.main import run_csv_to_db
+from showdata.main import show_data
 
 def parse_args_from_cli():
     parser = argparse.ArgumentParser()
@@ -26,11 +27,8 @@ def parse_args_from_cli():
 def parse_args_from_stdin():
     import sys
     raw = sys.stdin.buffer.read()
-    # print("[DEBUG] RAW BYTES:", list(raw), file=sys.stderr, flush=True)  # stderrにバイナリ吐く（壊れてるかチェック）
-
     try:
         decoded = raw.decode("utf-8")
-        # print("[DEBUG] DECODED:", decoded, file=sys.stderr, flush=True)
     except UnicodeDecodeError as e:
         print("[DEBUG] DECODE ERROR:", e, file=sys.stderr, flush=True)
         raise
@@ -44,7 +42,7 @@ def main(args_dict):
     if mode == "csv":
         return run_csv_to_db(args_dict)
     elif mode == "show":
-        return {"status": "info", "message": "show mode"}
+        return show_data(args_dict)
     else:
         return {"status": "error", "message": f"Unknown mode: {mode}"}
 

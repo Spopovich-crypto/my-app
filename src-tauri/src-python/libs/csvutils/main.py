@@ -13,11 +13,12 @@ def run_csv_to_db(args):
     
     for i in range(100):
         # 標準出力のみに出力
-        print(f"{i}番目のCSVファイルを処理しています", flush=True)
+        print(f"{i + 1}番目のCSVファイルを処理しています", flush=True)
         # 処理間に少し待機を入れる（バッファリング問題の確認用）- 待機時間を短縮
-        time.sleep(0.05)
+        time.sleep(0.1)
     
     print("全CSVファイルの処理が完了しました", flush=True)
+
     
     return {
         "message": "全CSV処理が完了しました"
