@@ -1,3 +1,4 @@
+// components/ImportFormStreaming.jsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -33,7 +34,7 @@ import usePythonStreaming from "../hooks/usePythonStreaming";
 
 export default function ImportFormStreaming() {
   // フォーム用の state
-  const [formVisible, setFormVisible] = useState(false);
+  const [formVisible, setFormVisible] = useState(true);
   const [activeStep, setActiveStep] = useState(0);
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "warning" });
   const [targetFolder, setTargetFolder] = useState("");
@@ -54,8 +55,18 @@ export default function ImportFormStreaming() {
   const [trigger, setTrigger] = useState(0);
   const [streamParams, setStreamParams] = useState(null);
 
-  // trigger が更新されると、usePythonStreaming が Python 実行を開始し、ログが取得される
+  // trigger が更新されると usePythonStreaming が Python 実行を開始し、ログを取得する
   const { logLines, completed } = usePythonStreaming(trigger, "main.py", streamParams || {});
+
+  // 実行中かどうかのフラグ（処理が開始され、かつ完了していない場合）
+  const isProcessing = trigger > 0 && !completed;
+
+  // 完了時に snackbar を表示する useEffect
+  useEffect(() => {
+    if (completed && trigger > 0) {
+      setSnackbar({ open: true, message: "✅ 処理が完了しました！", severity: "success" });
+    }
+  }, [completed, trigger]);
 
   // ローカルの工場コード履歴を保存する仕組み
   const savePlantCodeHistory = (newCode) => {
@@ -139,7 +150,7 @@ export default function ImportFormStreaming() {
       })),
     };
 
-    // payload をストリーミング処理のパラメーターとしてセットし、
+    // payload をストリーミング実行用のパラメーターとしてセットし、
     // trigger を更新することで usePythonStreaming が再度実行される
     setStreamParams(payload);
     setTrigger((prev) => prev + 1);
@@ -164,14 +175,16 @@ export default function ImportFormStreaming() {
               ))}
             </Stepper>
             <Box mt={2} display="flex" justifyContent="space-between">
-              <Button disabled={activeStep === 0} onClick={() => setActiveStep((prev) => prev - 1)}>
+              <Button disabled={activeStep === 0 || isProcessing} onClick={() => setActiveStep((prev) => prev - 1)}>
                 戻る
               </Button>
               {activeStep < steps.length - 1 ? (
-                <Button onClick={() => setActiveStep((prev) => prev + 1)}>次へ</Button>
+                <Button disabled={isProcessing} onClick={() => setActiveStep((prev) => prev + 1)}>
+                  次へ
+                </Button>
               ) : (
-                <Button variant="contained" onClick={handleSubmit}>
-                  インポート実行
+                <Button variant="contained" onClick={handleSubmit} disabled={isProcessing}>
+                  {isProcessing ? "実行中…" : "インポート実行"}
                 </Button>
               )}
             </Box>
@@ -265,6 +278,7 @@ export default function ImportFormStreaming() {
                           startIcon={<RemoveCircle />}
                           color="error"
                           variant="outlined"
+                          disabled={isProcessing}
                         >
                           イベント削除
                         </Button>
@@ -273,7 +287,7 @@ export default function ImportFormStreaming() {
                   </Accordion>
                 ))}
                 <Box mt={2}>
-                  <Button startIcon={<AddCircle />} onClick={handleAddEvent} variant="outlined">
+                  <Button startIcon={<AddCircle />} onClick={handleAddEvent} variant="outlined" disabled={isProcessing}>
                     イベント追加
                   </Button>
                 </Box>
@@ -307,25 +321,7 @@ export default function ImportFormStreaming() {
                 <TextField label="DB出力パス" fullWidth value={dbPath} disabled />
               </Box>
             )}
-          </Box>
-        </Collapse>
-
-        <Snackbar
-          open={snackbar.open}
-          autoHideDuration={4000}
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        >
-          <Alert
-            onClose={() => setSnackbar({ ...snackbar, open: false })}
-            severity={snackbar.severity}
-            sx={{ width: "100%" }}
-          >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-
-        {/* ここからストリーミング実行結果の表示 */}
+                    {/* ストリーミング実行結果の表示 */}
         {trigger > 0 && (
           <Box mt={4}>
             <Typography variant="h6" gutterBottom>
@@ -336,13 +332,23 @@ export default function ImportFormStreaming() {
                 <LogLine key={idx} log={log} />
               ))}
             </LogViewer>
-            {completed && (
-              <Typography variant="subtitle1" color="green" mt={2}>
-                ✅ 処理が完了しました！
-              </Typography>
-            )}
           </Box>
         )}
+          </Box>
+        </Collapse>
+
+        <Snackbar
+          open={snackbar.open}
+          autoHideDuration={4000}
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        >
+          <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: "100%" }}>
+            {snackbar.message}
+          </Alert>
+        </Snackbar>
+
+
       </Container>
     </LocalizationProvider>
   );
