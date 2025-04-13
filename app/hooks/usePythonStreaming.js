@@ -44,10 +44,10 @@ const usePythonStreaming = () => {
             return [...prev, log];
           });
 
+        //   console.log(log);
           // 終了条件の判定
           if (
-            log.message.includes("CSV処理完了") ||
-            log.message.includes("全処理完了")
+            log.message.includes("Pythonプロセス終了")
           ) {
             setCompleted(true);
           }
