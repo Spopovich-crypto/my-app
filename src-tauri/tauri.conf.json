@@ -14,7 +14,7 @@
       {
         "title": "my-app",
         "width": 800,
-        "height": 600,
+        "height": 960,
         "resizable": true,
         "fullscreen": false
       }
