@@ -5,7 +5,10 @@ import { useEffect, useState } from "react";
 import { listen } from "@tauri-apps/api/event";
 import { invoke } from "@tauri-apps/api/core";
 
-const usePythonStreaming = () => {
+
+
+
+const usePythonStreaming = (script, params) => {
   const [logLines, setLogLines] = useState([]);
   const [completed, setCompleted] = useState(false);
 
@@ -14,13 +17,7 @@ const usePythonStreaming = () => {
     let unlistenCallback = null;
 
     const startPython = async () => {
-      const script = "main.py";
-      const params = {
-        mode: "csv",
-        folder: "./data",
-        plant_name: "工場B",
-      };
-
+ 
       try {
         unlistenCallback = await listen("python-log", (event) => {
           if (isUnmounted) return;
